@@ -18,6 +18,7 @@
 //  along with NineAnimator.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+import Foundation
 import PackageDescription
 
 let package = Package(
@@ -26,6 +27,7 @@ let package = Package(
     products: [
         .library(
             name: "NineAnimatorCommon",
+            type: .dynamic,
             targets: [ "NineAnimatorCommon" ]
         )
     ],
