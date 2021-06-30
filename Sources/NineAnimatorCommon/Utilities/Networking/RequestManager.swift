@@ -196,7 +196,8 @@ public extension NARequestManager {
                             if let onResponse = onResponse {
                                 let responseObject = Response(
                                     request: response.request,
-                                    response: request.response
+                                    response: request.response,
+                                    data: response.data
                                 )
                                 try onResponse(responseObject)
                             }
@@ -307,6 +308,7 @@ public extension NARequestManager {
     struct Response {
         public var request: URLRequest?
         public var response: HTTPURLResponse?
+        public var data: Data?
     }
 }
 
