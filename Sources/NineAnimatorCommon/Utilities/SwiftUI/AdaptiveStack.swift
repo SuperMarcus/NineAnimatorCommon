@@ -19,6 +19,8 @@
 
 import SwiftUI
 
+#if !os(macOS)
+
 /// View that surrounds its contents in a HStack or VStack based on the screen's current sizeClass
 @available(iOS 14.0, *)
 public struct AdaptiveStack<Content: View>: View {
@@ -52,3 +54,5 @@ public struct AdaptiveStack<Content: View>: View {
         }
     }
 }
+
+#endif

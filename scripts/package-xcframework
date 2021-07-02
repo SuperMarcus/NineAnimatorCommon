@@ -1,0 +1,24 @@
+#!/bin/zsh
+
+PROJECT_DIR="$(cd "$(dirname "${(%):-%N}")/.." && pwd)";
+SCHEME="NineAnimatorCommon"
+OUTPUT_DIR="${PROJECT_DIR}/products"
+OUTPUT_ARCHIVE="${SCHEME}.xcframework.zip"
+
+set -e
+
+pushd "${OUTPUT_DIR}"
+zip -r "${OUTPUT_ARCHIVE}" "${SCHEME}.xcframework"
+XCF_CHECKSUM="$(swift package --package-path "${PROJECT_DIR}" compute-checksum "${OUTPUT_ARCHIVE}")"
+
+cat > manifest.json <<EOF
+{
+    "file": "${OUTPUT_ARCHIVE}",
+    "checksum": "${XCF_CHECKSUM}"
+}
+EOF
+
+echo "[*] Archive checksum is ${XCF_CHECKSUM}"
+echo "::set-output name=xcf-checksum::${XCF_CHECKSUM}"
+
+popd

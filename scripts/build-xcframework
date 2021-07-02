@@ -1,0 +1,41 @@
+#!/bin/zsh
+
+PROJECT_DIR="$(cd "$(dirname "${(%):-%N}")/.." && pwd)";
+
+ARCHIVE_DESTINATIONS=(
+    ios "generic/platform=iOS,name=Any iOS Device"
+    ios-simulator "generic/platform=iOS simulator"
+    mac-catalyst "generic/platform=macOS,variant=Mac Catalyst,name=Any Mac"
+)
+OUTPUT_DIR="${PROJECT_DIR}/products"
+SCHEME="NineAnimatorCommon"
+MKXCFRAMEWORK_ARGS=()
+MKXCFRAMEWORK_OUTPUT="${OUTPUT_DIR}/${SCHEME}.xcframework"
+BUILD_CONFIG="Release"
+
+set -e
+
+if [[ ! -z "$1" ]]
+then BUILD_CONFIG="$1"
+fi
+
+echo "[*] Project directory is ${PROJECT_DIR}"
+echo "[*] Product directory is ${PRODUCT_DIR}"
+echo "[*] Build config: ${BUILD_CONFIG}"
+
+rm -rf "${OUTPUT_DIR}"
+mkdir "${OUTPUT_DIR}"
+
+for NAME DST in "${(@kv)ARCHIVE_DESTINATIONS}"
+do
+    local ARCHIVE_PATH="${OUTPUT_DIR}/${SCHEME}-${NAME}.xcarchive"
+    echo "[*] Building for destination \"$NAME\" (\"$DST\")"
+    xcodebuild archive -scheme "${SCHEME}" -destination "${DST}" -configuration "${BUILD_CONFIG}" -archivePath "${ARCHIVE_PATH}"
+    MKXCFRAMEWORK_ARGS+=("-framework" "$(find "${ARCHIVE_PATH}" -name "${SCHEME}.framework")")
+done
+
+echo "[*] Assembling XCFramework..."
+
+xcodebuild -create-xcframework "${MKXCFRAMEWORK_ARGS[@]}" -output "${MKXCFRAMEWORK_OUTPUT}"
+
+echo "[*] XCFramework for scheme \"${SCHEME}\" written to \"${MKXCFRAMEWORK_OUTPUT}\""

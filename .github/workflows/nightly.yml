@@ -1,0 +1,32 @@
+name: Nightly Build
+on: [push]
+
+jobs:
+  build:
+    
+    runs-on: macos-latest
+    
+    strategy:
+      matrix:
+        config: ['Release', 'Debug']
+    
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+    - name: Build for ${{ matrix.config }}
+      run: ./scripts/build-xcframework "${{ matrix.config }}"
+    - name: Package ${{ matrix.config }}
+      id: pkgstep
+      run: ./scripts/package-xcframework "${{ matrix.config }}"
+    - name: Upload ${{ matrix.platform }} Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: NineAnimatorCommon_Nightly.${{ steps.pkgstep.outputs.xcf-checksum }}.${{ matrix.config }}
+        path: products/
+        if-no-files-found: error
+
