@@ -30,8 +30,28 @@ for NAME DST in "${(@kv)ARCHIVE_DESTINATIONS}"
 do
     local ARCHIVE_PATH="${OUTPUT_DIR}/${SCHEME}-${NAME}.xcarchive"
     echo "[*] Building for destination \"$NAME\" (\"$DST\")"
-    xcodebuild archive -scheme "${SCHEME}" -destination "${DST}" -configuration "${BUILD_CONFIG}" -archivePath "${ARCHIVE_PATH}"
+    xcodebuild archive -scheme "${SCHEME}" -destination "${DST}" -configuration "${BUILD_CONFIG}" -archivePath "${ARCHIVE_PATH}" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES
     MKXCFRAMEWORK_ARGS+=("-framework" "$(find "${ARCHIVE_PATH}" -name "${SCHEME}.framework")")
+    
+    # Package dSYMs with xcframework
+    for SYM in ${ARCHIVE_PATH}/**/*.dSYM
+    do
+        if [[ -d "$SYM" ]]
+        then
+            echo "[*] Adding debug symbol \"${SYM}\""
+            MKXCFRAMEWORK_ARGS+=("-debug-symbols" "$SYM")
+        fi
+    done
+    
+    # Package .bcsymbolmap with xcframework
+    for SYM in ${ARCHIVE_PATH}/**/*.bcsymbolmap
+    do
+        if [[ -f "$SYM" ]]
+        then
+            echo "[*] Adding debug symbol \"${SYM}\""
+            MKXCFRAMEWORK_ARGS+=("-debug-symbols" "$SYM")
+        fi
+    done
 done
 
 echo "[*] Assembling XCFramework..."
