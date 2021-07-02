@@ -14,6 +14,7 @@ MKXCFRAMEWORK_OUTPUT="${OUTPUT_DIR}/${SCHEME}.xcframework"
 BUILD_CONFIG="Release"
 
 set -e
+setopt NULL_GLOB
 
 if [[ ! -z "$1" ]]
 then BUILD_CONFIG="$1"
