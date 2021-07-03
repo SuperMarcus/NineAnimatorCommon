@@ -27,6 +27,8 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: NineAnimatorCommon_Nightly.${{ steps.pkgstep.outputs.xcf-checksum }}.${{ matrix.config }}
-        path: products/
+        path: |
+          products/NineAnimatorCommon.xcframework.zip
+          products/manifest.json
         if-no-files-found: error
 
