@@ -27,7 +27,7 @@ public class NACoreDataLibrary {
     public internal(set) lazy var mainContext = Context(withContext: self._container.viewContext)
     
     internal init() {
-        guard let modelUrl = Bundle.module.url(
+        guard let modelUrl = Bundle(for: Self.self).url(
                 forResource: "UserLibrary",
                 withExtension: "momd"),
               let managedObjectModel = NSManagedObjectModel(
