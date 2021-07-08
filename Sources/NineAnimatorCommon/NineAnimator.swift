@@ -126,6 +126,46 @@ public class NineAnimator: Alamofire.SessionDelegate {
 }
 
 public extension NineAnimator {
+    private class BundleFinder { }
+    
+    /// NineAnimatorCommon resource bundle
+    ///
+    /// - Note: This static field resembles the SPM-generated Bundle.module accessor.
+    static let commonResourceBundle: Bundle = {
+        let possibleBundleNames = [
+            "NineAnimatorCommon_NineAnimatorCommon", // When built as a swift module
+            "NineAnimatorCommon"
+        ]
+
+        let candidates = [
+            // Bundle should be present here when the package is linked into an App.
+            Bundle.main.resourceURL,
+
+            // Bundle should be present here when the package is linked into a framework.
+            Bundle(for: BundleFinder.self).resourceURL,
+
+            // For command-line tools.
+            Bundle.main.bundleURL
+        ]
+
+        for candidate in candidates {
+            for bundleName in possibleBundleNames {
+                let bundlePath = candidate?.appendingPathComponent(bundleName + ".bundle")
+                
+                if let bundle = bundlePath.flatMap(Bundle.init(url:)) {
+                    return bundle
+                }
+            }
+        }
+        
+        Log.error("[NineAnimator] Unable to locate resource bundle. The app may crash.")
+        
+        // Return the default bundle for this class
+        return Bundle(for: NineAnimator.self)
+    }()
+}
+
+public extension NineAnimator {
     func sortedRecommendationSources() -> [RecommendationSource] {
         let pool = additionalRecommendationSources
         // Later will add the featured containers
