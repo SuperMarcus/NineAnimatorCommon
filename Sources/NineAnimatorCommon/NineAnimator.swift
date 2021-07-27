@@ -302,7 +302,7 @@ public extension NineAnimator {
     /// Returning the list of TrackingContexts containing this reference
     func trackingContexts(containingReference reference: ListingAnimeReference) -> [TrackingContext] {
         var trackingContexts = [TrackingContext]()
-        for recentAnime in user.recentAnimes {
+        for recentAnime in user.retrieveRecents() {
             let context = trackingContext(for: recentAnime)
             if context.availableReferences.contains(reference) {
                 trackingContexts.append(context)

@@ -143,42 +143,6 @@ public extension NineAnimatorUser {
 
 // MARK: - Recents
 public extension NineAnimatorUser {
-    /// A list of AnimeLink ordered from recently viewed to distant
-    ///
-    /// Direct modification outside the scope of NineAnimatorUser should
-    /// be prevented. Always use available methods when possible.
-    var recentAnimes: [AnimeLink] {
-        get {
-            do {
-                return try coreDataLibrary.mainContext.fetchRecents().compactMap {
-                    anyLink in
-                    if case let .anime(animeLink) = anyLink {
-                        return animeLink
-                    } else { return nil }
-                }
-            } catch {
-                Log.error("[NineAnimatorUser] Unable to decode recent list: %@", error)
-                return []
-            }
-        }
-        set {
-            do {
-                try coreDataLibrary.mainContext.resetRecents(to: newValue.map {
-                    .anime($0)
-                })
-            } catch {
-                Log.error("[NineAnimatorUser] Unable to save recent list: %@", error)
-            }
-        }
-//        get { decodeIfPresent([AnimeLink].self, from: _freezer.value(forKey: Keys.recentAnimeList)) ?? [] }
-//        set {
-//            guard let data = encodeIfPresent(data: newValue) else {
-//                return Log.error("Recent animes failed to encode")
-//            }
-//            _freezer.set(data, forKey: Keys.recentAnimeList)
-//        }
-    }
-    
     /// The `EpisodeLink` to the last viewed episode
     var lastEpisode: EpisodeLink? {
         decodeIfPresent(EpisodeLink.self, from: _freezer.value(forKey: Keys.recentEpisode))
@@ -188,6 +152,56 @@ public extension NineAnimatorUser {
     var recentServer: Anime.ServerIdentifier? {
         get { _freezer.string(forKey: Keys.recentServer) }
         set { _freezer.set(newValue as String?, forKey: Keys.recentServer) }
+    }
+    
+    /// Retrieves the number of recently watched titles
+    var countOfRecents: Int {
+        do {
+            return try coreDataLibrary
+                .mainContext
+                .countOfRecents()
+        } catch {
+            Log.error("[NineAnimatorUser] Unable to retrieve count of recents: %@", error)
+            return 0
+        }
+    }
+    
+    /// A list of AnimeLink ordered from recently viewed to distant
+    func retrieveRecents(fetchLimit: Int? = nil) -> [AnimeLink] {
+        do {
+            return try coreDataLibrary
+                .mainContext
+                .fetchRecents(fetchLimit: fetchLimit)
+                .compactMap {
+                    anyLink in
+                    if case let .anime(animeLink) = anyLink {
+                        return animeLink
+                    } else { return nil }
+                }
+        } catch {
+            Log.error("[NineAnimatorUser] Unable to decode recent list: %@", error)
+            return []
+        }
+    }
+    
+    func removeRecent(_ link: AnimeLink) {
+        do {
+            try coreDataLibrary
+                .mainContext
+                .removeLibraryRecord(forLink: .anime(link))
+        } catch {
+            Log.error("[NineAnimatorUser] Unable to remove recent entry: %@", error)
+        }
+    }
+    
+    func setRecents(to newHistory: [AnimeLink]) {
+        do {
+            try coreDataLibrary
+                .mainContext
+                .resetRecents(to: newHistory.map { .anime($0) })
+        } catch {
+            Log.error("[NineAnimatorUser] Unable to save recent list: %@", error)
+        }
     }
     
     /// Remove all anime viewing history

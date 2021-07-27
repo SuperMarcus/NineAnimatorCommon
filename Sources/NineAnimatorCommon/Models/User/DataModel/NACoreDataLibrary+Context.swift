@@ -33,13 +33,21 @@ public extension NACoreDataLibrary {
 // MARK: - Recents
 public extension NACoreDataLibrary.Context {
     /// Obtain the list of recently viewed titles
-    func fetchRecents() throws -> [AnyLink] {
+    func fetchRecents(fetchLimit: Int? = nil) throws -> [AnyLink] {
         try _coreDataContext.performWithResults {
             try _coreDataContext
-                .fetch(_recentsFetchRequest())
+                .fetch(_recentsFetchRequest(fetchLimit: fetchLimit))
                 .compactMap {
                     $0.link?.nativeAnyLink
                 }
+        }
+    }
+    
+    /// Retrieves the number of recently watched titles
+    func countOfRecents() throws -> Int {
+        try _coreDataContext.performWithResults {
+            try _coreDataContext
+                .count(for: _recentsFetchRequest())
         }
     }
     
@@ -52,6 +60,12 @@ public extension NACoreDataLibrary.Context {
             sectionNameKeyPath: nil,
             cacheName: nil
         )
+    }
+    
+    /// Remove a single entry from the library
+    func removeLibraryRecord(forLink link: AnyLink) throws {
+        let record = try _obtainManagedRecord(forAnyLink: link)
+        try removeLibraryRecord(record: record)
     }
     
     /// Remove a single entry from the library
@@ -164,14 +178,18 @@ internal extension NACoreDataLibrary.Context {
     }
     
     /// Obtain a NSFetchRequest for a list of library records sorted by lastAccess
-    fileprivate func _recentsFetchRequest() -> NSFetchRequest<NACoreDataLibraryRecord> {
+    fileprivate func _recentsFetchRequest(fetchLimit: Int? = nil) -> NSFetchRequest<NACoreDataLibraryRecord> {
         let request = NACoreDataLibraryRecord.fetchRequest() as NSFetchRequest<NACoreDataLibraryRecord>
         request.sortDescriptors = [
-            .init(key: "lastAccess", ascending: false)
+            .init(keyPath: \NACoreDataLibraryRecord.lastAccess, ascending: false)
         ]
         request.relationshipKeyPathsForPrefetching = [
-            "link"
+            #keyPath(NACoreDataLibraryRecord.link)
         ]
+        
+        if let limit = fetchLimit {
+            request.fetchLimit = limit
+        }
         return request
     }
 }
