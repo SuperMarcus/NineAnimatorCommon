@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2C4EA77926C702C800DF3AAB /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 2C4EA77826C702C800DF3AAB /* LICENSE */; };
 		2CE36808268FE41F00E2AAF2 /* NineAnimatorCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE36789268FE41E00E2AAF2 /* NineAnimatorCommon.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2CE36809268FE41F00E2AAF2 /* NineAnimator+Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE3678B268FE41E00E2AAF2 /* NineAnimator+Environment.swift */; };
 		2CE3680A268FE41F00E2AAF2 /* NineAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE3678C268FE41E00E2AAF2 /* NineAnimator.swift */; };
@@ -120,6 +121,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2C4EA77826C702C800DF3AAB /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		2C4EA77A26C702DC00DF3AAB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		2C4EA77B26C702DC00DF3AAB /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		2CE365DF268FE37F00E2AAF2 /* NineAnimatorCommon.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NineAnimatorCommon.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CE36789268FE41E00E2AAF2 /* NineAnimatorCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NineAnimatorCommon.h; sourceTree = "<group>"; };
 		2CE3678B268FE41E00E2AAF2 /* NineAnimator+Environment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NineAnimator+Environment.swift"; sourceTree = "<group>"; };
@@ -250,6 +254,9 @@
 		2CE365D5268FE37F00E2AAF2 = {
 			isa = PBXGroup;
 			children = (
+				2C4EA77A26C702DC00DF3AAB /* README.md */,
+				2C4EA77826C702C800DF3AAB /* LICENSE */,
+				2C4EA77B26C702DC00DF3AAB /* scripts */,
 				2CE36788268FE41E00E2AAF2 /* Sources */,
 				2CE365E0268FE37F00E2AAF2 /* Products */,
 			);
@@ -595,6 +602,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2C4EA77926C702C800DF3AAB /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
