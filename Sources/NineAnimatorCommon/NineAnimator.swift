@@ -89,6 +89,9 @@ public class NineAnimator: Alamofire.SessionDelegate {
     /// User model
     public private(set) lazy var user = NineAnimatorUser()
     
+    /// Anime Update Watcher
+    public let animeWatcher = AnimeWatcher()
+    
     /// Container for the list of sources
     public private(set) var sources = [String: Source]()
     
