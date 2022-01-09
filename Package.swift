@@ -38,22 +38,22 @@ let package = Package(
         .package(
             name: "Alamofire",
             url: "https://github.com/Alamofire/Alamofire.git",
-            from: "5.4.3"
+            from: "5.5.0"
         ),
         .package(
             name: "SwiftSoup",
             url: "https://github.com/scinfu/SwiftSoup.git",
-            from: "2.3.2"
+            from: "2.3.6"
         ),
         .package(
             name: "Kingfisher",
             url: "https://github.com/onevcat/Kingfisher.git",
-            from: "6.3.0"
+            from: "7.1.2"
         ),
         .package(
             name: "OpenCastSwift",
             url: "https://github.com/SuperMarcus/OpenCastSwift.git",
-            .revision("5f0328feb73b811180a88b60cc6ed36bfb76bf03")
+            .revision("0cb71ddaabd1128f5745ff5f37f6af26bea82d36")
         )
     ],
     targets: [
