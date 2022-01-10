@@ -17,9 +17,9 @@
 //  along with NineAnimator.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//import AppCenter
-//import AppCenterAnalytics
-//import AppCenterCrashes
+// import AppCenter
+// import AppCenterAnalytics
+// import AppCenterCrashes
 import Foundation
 
 public class NineAnimatorCloud {
@@ -32,9 +32,7 @@ public class NineAnimatorCloud {
     
     public private(set) lazy var requestManager = NACloudRequestManager(parent: self)
     
-    // swiftlint:disable weak_delegate
 //    private let appCenterCrashesDelegate = NAAppCenterCrashesDelegate()
-    // swiftlint:enable weak_delegate
     
     /// Build identifier used to communicate and identify the build with NineAnimator cloud services
     ///

@@ -64,12 +64,8 @@ public struct AsyncRequestHelper {
     
     /// Construct a `NineAnimatorPromise` for the current request that expects and parses a JSON response
     public func jsonResponse() -> NineAnimatorPromise<Any> {
-        NineAnimatorPromise {
-            [initRequest] cb in AsyncRequestHelper.pipeError(cb) {
-                try initRequest().responseJSON(
-                    completionHandler: AsyncRequestHelper.handler(cb)
-                )
-            }
+        dataResponse().then {
+            try JSONSerialization.jsonObject(with: $0, options: [])
         }
     }
     

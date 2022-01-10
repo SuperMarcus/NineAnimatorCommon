@@ -63,9 +63,7 @@ let package = Package(
                 "Alamofire",
                 "SwiftSoup",
                 "Kingfisher",
-                "OpenCastSwift"//,
-//                useBinaryAppCenterPackage ? "AppCenterCrashes" : .product(name: "AppCenterCrashes", package: "AppCenter"),
-//                useBinaryAppCenterPackage ? "AppCenterAnalytics" : .product(name: "AppCenterAnalytics", package: "AppCenter")
+                "OpenCastSwift"
             ],
             exclude: [
                 "Utilities/DictionaryCoding/LICENSE.md",
@@ -74,33 +72,3 @@ let package = Package(
         )
     ]
 )
-
-// Add binary dependencies of MSAppCenter
-//if useBinaryAppCenterPackage {
-//    // Inject AppCenter base libs as dependency
-//    package.targets.first!.dependencies.append("AppCenter")
-//
-//    // Add the AppCenter, AppCenterCrashes, and AppCenterAnalytics packages
-//    package.targets.append(.binaryTarget(
-//        name: "AppCenter",
-//        url: "https://supermarcus.github.io/NineAnimatorCommon/pkg/app-center/4.2.0/AppCenter.xcframework.zip",
-//        checksum: "5764c0ddde2ac6a8c89bd833a842fde98fde904b0a3c0cedd1c0a7b288809f89"
-//    ))
-//    package.targets.append(.binaryTarget(
-//        name: "AppCenterCrashes",
-//        url: "https://supermarcus.github.io/NineAnimatorCommon/pkg/app-center/4.2.0/AppCenterCrashes.xcframework.zip",
-//        checksum: "9579f4050945a8c9514144437ddd56b6053e40a631203069d090b365ddf734e8"
-//    ))
-//    package.targets.append(.binaryTarget(
-//        name: "AppCenterAnalytics",
-//        url: "https://supermarcus.github.io/NineAnimatorCommon/pkg/app-center/4.2.0/AppCenterAnalytics.xcframework.zip",
-//        checksum: "3694476713e145f4f6edbe32420da2342b1d5900461645b2b38b22e474013203"
-//    ))
-//} else {
-//    // Inject AppCenter as dependency
-//    package.dependencies.append(.package(
-//        name: "AppCenter",
-//        url: "https://github.com/microsoft/appcenter-sdk-apple.git",
-//        from: "4.1.1"
-//    ))
-//}

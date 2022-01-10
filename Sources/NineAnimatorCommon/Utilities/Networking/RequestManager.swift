@@ -239,7 +239,9 @@ public extension NARequestManager.RequestBuilding {
     
     /// Create a promise that receives and decodes a JSON-encoded response
     var responseJSON: NineAnimatorPromise<Any> {
-        self._makePromise { $0.responseJSON(completionHandler: $1) }
+        self.responseData.then {
+            try JSONSerialization.jsonObject(with: $0, options: [])
+        }
     }
     
     /// Create a promise that receives and decodes a JSON-encoded dictionary
