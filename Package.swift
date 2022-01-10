@@ -26,7 +26,7 @@ let useBinaryAppCenterPackage = false
 
 let package = Package(
     name: "NineAnimatorCommon",
-    platforms: [ .iOS(.v12), .tvOS(.v13), .watchOS(.v7), .macOS(.v11) ],
+    platforms: [ .iOS(.v13), .tvOS(.v13), .watchOS(.v7), .macOS(.v11) ],
     products: [
         .library(
             name: "NineAnimatorCommon",
@@ -69,6 +69,10 @@ let package = Package(
                 "Utilities/DictionaryCoding/LICENSE.md",
                 "Utilities/DictionaryCoding/README.md"
             ]
+        ),
+        .testTarget(
+            name: "NineAnimatorCommonTests",
+            dependencies: [ "NineAnimatorCommon" ]
         )
     ]
 )
