@@ -22,4 +22,18 @@ import Foundation
 /// A ServiceDescriptor is an object fetched from NineAnimatorCloud to support the various services and bring updates to the parsers
 public struct ServiceDescriptor: Codable {
     public var releaseDate: Date
+    
+    public var sourcesInformation: [RemoteSourceInformation]
+}
+
+/// A RemoteSourceInformation object details the serviceability of a particular source. This can be used to remotely mark a source as unservicable in the future.
+public struct RemoteSourceInformation: Codable {
+    /// Name of the source
+    public var name: String
+    
+    /// State of usability
+    public var isUsable: Bool
+    
+    /// Notes about the servicability of the source
+    public var usabilityNotes: String?
 }
