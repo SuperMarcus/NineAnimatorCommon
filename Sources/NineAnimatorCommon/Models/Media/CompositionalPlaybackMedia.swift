@@ -60,7 +60,8 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
                 return false
             }
             
-            Log.info(">>>> DEBUG: Requested to load '%@'", requestingResourceUrl.absoluteString)
+            // Commenting due to large amount of logs generated when requesting segments
+            // Log.info(">>>> DEBUG: Requested to load '%@'", requestingResourceUrl.absoluteString)
             
             switch requestingResourceUrl.scheme {
             case interceptResourceScheme:
@@ -73,11 +74,11 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
                     requestingResourceUrl: requestingResourceUrl,
                     loadingRequest: loadingRequest
                 )
-            case injectionCachedVttScheme:
+            /* case injectionCachedVttScheme:
                 return try loadingRequestCachedVtt(
                     requestingResourceUrl: requestingResourceUrl,
                     loadingRequest: loadingRequest
-                )
+                ) */
             default: throw NineAnimatorError.urlError
             }
         } catch { Log.error("[CompositionalPlaybackMedia] Loading error: %@", error) }
@@ -95,7 +96,7 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
 
 // MARK: - Playlist modification
 internal extension CompositionalPlaybackMedia {
-    private func loadingRequestCachedVtt(requestingResourceUrl: URL, loadingRequest: AVAssetResourceLoadingRequest) throws -> Bool {
+    /* private func loadingRequestCachedVtt(requestingResourceUrl: URL, loadingRequest: AVAssetResourceLoadingRequest) throws -> Bool {
         Log.info(">>>> DEBUG: Requested to load subtitle at %@", requestingResourceUrl.absoluteString)
         loadingTasks[loadingRequest] = requestVtt(requestingResourceUrl).error {
             error in loadingRequest.finishLoading(with: error)
@@ -122,7 +123,7 @@ internal extension CompositionalPlaybackMedia {
             loadingRequest.finishLoading()
         }
         return true
-    }
+    } */
     
     /// Generates and return subtitle playlists
     private func loadingRequestInjectSubtitle(requestingResourceUrl: URL, loadingRequest: AVAssetResourceLoadingRequest) throws -> Bool {
@@ -165,7 +166,7 @@ internal extension CompositionalPlaybackMedia {
 #EXT-X-ALLOW-CACHE:NO
 #EXT-X-TARGETDURATION:\(Int(vttEndTimestamp))
 #EXTINF:\(numFormatter.string(from: NSNumber(value: vttEndTimestamp)) ?? "0.000"), no desc
-\(vttCachedUrl.absoluteString)
+\(subtitleTrackInformation.url.absoluteString)
 #EXT-X-ENDLIST
 """.data(using: .utf8)
         } .error {
@@ -257,6 +258,14 @@ internal extension CompositionalPlaybackMedia {
                 method: .get,
                 headers: loadingRequest.request.allHTTPHeaderFields ?? [:]
             )
+            
+            loadingRequest.response = HTTPURLResponse(
+                url: originalUrl,
+                statusCode: 302,
+                httpVersion: nil,
+                headerFields: loadingRequest.request.allHTTPHeaderFields ?? [:]
+            )
+            
             loadingRequest.finishLoading()
         }
         
@@ -352,12 +361,12 @@ public extension CompositionalPlaybackMedia {
     }
     
     /// Retrieve UTI from MIME type
-    private func contentType(fromMimeType mime: String) throws -> String {
+    /* private func contentType(fromMimeType mime: String) throws -> String {
         let inferredContentUTI = try UTTypeCreatePreferredIdentifierForTag(
             kUTTagClassMIMEType,
             mime as CFString,
             nil
         ).tryUnwrap().takeRetainedValue()
         return inferredContentUTI as String
-    }
+    } */
 }
