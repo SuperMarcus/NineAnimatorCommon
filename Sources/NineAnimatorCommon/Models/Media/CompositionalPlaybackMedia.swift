@@ -146,7 +146,7 @@ internal extension CompositionalPlaybackMedia {
             ).tryUnwrap()
             let timestampMutipliers: [Double] = [ 3600, 60, 1 ]
             let vttEndTimestamp = try NSRegularExpression(
-                pattern: "\\d+:\\d+:[\\d\\.]+\\s+-->\\s+(\\d+):(\\d+):([\\d\\.]+)",
+                pattern: "(?:\\d+:)?\\d+:[\\d\\.]+\\s+-->\\s+(?:(\\d+):)?(\\d+):([\\d\\.]+)",
                 options: []
             ) .lastMatch(in: vttContentString)
                 .tryUnwrap()
