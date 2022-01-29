@@ -56,4 +56,103 @@ final class NineAnimatorPromiseTests: XCTestCase {
             XCTAssert(error is NineAnimatorError.UnknownError, "Caught error of wrong type.")
         }
     }
+    
+    class NACancellableIndicator: NineAnimatorAsyncTask {
+        var isCancelled: Bool = false
+        var didMarkAsComplete: Bool = false
+        let expectation: XCTestExpectation
+        
+        func cancel() {
+            isCancelled = true
+        }
+        
+        func markAsComplete() {
+            didMarkAsComplete = true
+            if isCancelled {
+                expectation.fulfill()
+            }
+        }
+        
+        init(_ exp: XCTestExpectation) {
+            self.expectation = exp
+        }
+    }
+    
+    /// Ensures that cancellation of a converted swift concurrency task also affects the original NineAnimatorPromise
+    func testConvertedConcurrencyTaskCancellation() async {
+        let expectation = XCTestExpectation(description: "Swift concurrency cancellation not transferrable to NineAnimatorPromise")
+        let cancellable = NACancellableIndicator(expectation)
+        
+        var didInitiateTask = false
+        
+        // Dispatch everything on the main queue
+        let promise = NineAnimatorPromise<Void>(queue: DispatchQueue.main) {
+            cb in
+            // Wait for the cancellation to be initiated, then completes the promise with an error
+            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
+                timer in
+                // Mark the task as initiated
+                didInitiateTask = true
+                
+                if cancellable.isCancelled {
+                    timer.invalidate()
+                    cancellable.markAsComplete()
+                    cb(nil, NineAnimatorError.unknownError("The promise's error message should not be accepted after being cancelled."))
+                }
+            }
+            return cancellable
+        } .then {
+            // Should never execute to this point since the task was cancelled immediately after initiation
+            XCTFail("Promise continuation executed after being cancelled.")
+        }
+        
+        let detachedTask = Task(priority: .userInitiated) {
+            try await promise.awaitableResult()
+        }
+        
+        // Wait for the task to be initiated, then cancel the task with swift concurrency
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
+            timer in
+            if didInitiateTask {
+                detachedTask.cancel()
+                timer.invalidate()
+            }
+        }
+        
+        wait(for: [ expectation ], timeout: 5.0)
+    }
+    
+    func testConvertedPromiseCancellation() async {
+        let initiationExp = XCTestExpectation(description: "Swift concurrency task failed to initiate from NineAnimatorPromise")
+        let cancellationExp = XCTestExpectation(description: "NineAnimatorPromise cancellation not transferrable to Swift concurrency")
+        let promiseConclusionExp = XCTestExpectation(description: "NineAnimatorPromise defer statement not executed")
+        
+        let promise = NineAnimatorPromise.async(priority: .userInitiated) {
+            initiationExp.fulfill()
+            await withTaskCancellationHandler(operation: {
+                while true {
+                    await Task.yield()
+                }
+            }) { cancellationExp.fulfill() }
+        }
+        
+        // Initiates the NineAnimatorPromise tasks
+        let promiseAsyncTask = promise.error {
+            XCTFail("Promise failed with error: \($0.localizedDescription)")
+        } .defer {
+            _ in promiseConclusionExp.fulfill()
+        } .finally {
+            XCTFail("Promise concluded without cancellation.")
+        }
+        
+        // Wait for the task to be initiated
+        wait(for: [ initiationExp ], timeout: 5.0)
+        
+        // Cancels the NineAnimator AsyncTask
+        // Cancellation should propagate to the swift concurrency task
+        promiseAsyncTask.cancel()
+        
+        // Wait for cancellation to become effective and the defer statement to be invoked
+        wait(for: [ cancellationExp, promiseConclusionExp ], timeout: 5.0)
+    }
 }

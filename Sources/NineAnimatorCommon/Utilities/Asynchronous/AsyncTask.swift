@@ -17,15 +17,14 @@
 //  along with NineAnimator.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+import Combine
 import Foundation
 
 /// Generic type for a callback closure
 public typealias NineAnimatorCallback<T> = (T?, Error?) -> Void
 
 /// Representing an asynchronized task that can be cancelled
-public protocol NineAnimatorAsyncTask: AnyObject {
-    func cancel()
-}
+public protocol NineAnimatorAsyncTask: AnyObject, Cancellable { }
 
 /// A container class used to hold strong references to the
 /// contained NineAnimatorAsyncTask and cancel them when
@@ -36,6 +35,10 @@ public protocol NineAnimatorAsyncTask: AnyObject {
 public class AsyncTaskContainer: NineAnimatorAsyncTask {
     @AtomicProperty fileprivate var tasks: [NineAnimatorAsyncTask] = []
     @AtomicProperty fileprivate var cancellationHandlers: [(AsyncTaskContainer) -> Void] = []
+    
+    public var isEmpty: Bool {
+        tasks.isEmpty
+    }
     
     public init() { }
     

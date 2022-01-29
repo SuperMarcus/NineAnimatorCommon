@@ -21,27 +21,51 @@ import Combine
 import Foundation
 
 public extension NineAnimatorPromise {
+    /// Converts this promise to an awaitable swift concurrency task.
     func awaitableResult() async throws -> ResultType {
-        var referencedTask: NineAnimatorAsyncTask?
+        var references = AsyncTaskContainer()
         
-        let result = try await withCheckedThrowingContinuation {
-            [weak self] continuation in
-            // For the duration of this function, referencedTask should maintain reference to this promise
-            referencedTask = self?.error {
-                continuation.resume(throwing: $0)
-            } .finally {
-                continuation.resume(returning: $0)
+        return try await withTaskCancellationHandler(operation: {
+            let result: ResultType = try await withCheckedThrowingContinuation {
+                [weak self] continuation in
+                // For the duration of this function, referencedTask should maintain reference to this promise
+                let newTask = self?.error {
+                    continuation.resume(throwing: $0)
+                } .finally {
+                    continuation.resume(returning: $0)
+                }
+                references.add(newTask)
             }
+            
+            // Really just to silence the unread variable warning...
+            if references.isEmpty {
+                Log.debug("[NineAnimatorPromise] Awaitable task completed without a valid task? How can this be?")
+            }
+            
+            return result
+        }) {
+            [weak references] in
+            references?.cancel()
         }
-        
-        // Really just to silence the unread variable warning...
-        if referencedTask == nil {
-            Log.debug("[NineAnimatorPromise] Awaitable task completed without a valid task? How can this be?")
+    }
+    
+    /// Creates a new NineAnimatorPromise from a swift concurrency task closure.
+    static func `async`(priority: TaskPriority? = nil, _ concurrentClosure: @escaping () async throws -> ResultType?) -> NineAnimatorPromise<ResultType> {
+        return NineAnimatorPromise {
+            cb in
+            let detachedTask = Task(priority: priority) {
+                do {
+                    let result = try await concurrentClosure()
+                    cb(result, nil)
+                } catch {
+                    cb(nil, error)
+                }
+            }
+            return AnyCancellable(detachedTask)
         }
-        
-        // Release
-        referencedTask = nil
-        
-        return result
     }
 }
+
+extension AnyCancellable: NineAnimatorAsyncTask { }
+
+extension Task: Cancellable { }

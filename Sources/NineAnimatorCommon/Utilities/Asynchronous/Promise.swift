@@ -254,9 +254,12 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
         return untilThenPromise
     }
     
-    /// Add a statement to the promise that is guarenteed to be executed after this promise concludes
+    /// Add a statement to the promise that is guarenteed to be executed after this promise concludes or cancels.
     ///
-    /// The defer block is invoked by the `resolve(_:)` or `reject(_:)` function
+    /// The defer block is invoked by the `resolve(_:)`, `reject(_:)`, or as a result of cancellation.
+    ///
+    /// - Important: Do not create additional references to this promise object within the defer block -- the defer block may
+    ///   be invoked as a result of implicit cancellation from lossing reference to this promise.
     public func `defer`(_ deferBlock: @escaping (NineAnimatorPromise<ResultType>) -> Void) -> NineAnimatorPromise<ResultType> {
         if self.deferBlock != nil {
             Log.error("[NineAnimatorPromise] Attempting to add multiple defer blocks. Only the last added block will be executed.")
@@ -297,7 +300,13 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
         defer { semaphore.signal() }
         
         // Cancel the reference task and release the promise
+        chainedReference?.cancel()
         referenceTask?.cancel()
+        
+        // Call the defer block before releasing everything else
+        deferBlock?(self)
+        
+        // Release all code
         releaseAll()
     }
     
@@ -306,6 +315,7 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
     /// - Important: Calling this method won't release the result of the promise.
     ///              Make sure the result doesn't reference the promise.
     private func releaseAll() {
+        task = nil
         referenceTask = nil
         chainedPromiseCallback = nil
         chainedErrorCallback = nil
@@ -329,12 +339,15 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
                     Log.error("[NineAnimatorPromise] Reference to promise lost before the initial task can run")
                     return
                 }
+                
                 // Save the reference created by the task
                 self.referenceTask = task {
                     [weak self] result, error in
                     if let result = result {
                         self?.resolve(result)
-                    } else { self?.reject(error ?? NineAnimatorError.providerError("Unknown Error")) }
+                    } else {
+                        self?.reject(error ?? NineAnimatorError.providerError("Unknown Error"))
+                    }
                 }
             }
         }
