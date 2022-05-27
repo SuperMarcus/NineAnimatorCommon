@@ -58,8 +58,8 @@ final class NineAnimatorPromiseTests: XCTestCase {
     }
     
     class NACancellableIndicator: NineAnimatorAsyncTask {
-        var isCancelled: Bool = false
-        var didMarkAsComplete: Bool = false
+        var isCancelled = false
+        var didMarkAsComplete = false
         let expectation: XCTestExpectation
         
         func cancel() {
@@ -129,11 +129,11 @@ final class NineAnimatorPromiseTests: XCTestCase {
         
         let promise = NineAnimatorPromise.async(priority: .userInitiated) {
             initiationExp.fulfill()
-            await withTaskCancellationHandler(operation: {
+            await withTaskCancellationHandler {
                 while true {
                     await Task.yield()
                 }
-            }) { cancellationExp.fulfill() }
+            } onCancel: { cancellationExp.fulfill() }
         }
         
         // Initiates the NineAnimatorPromise tasks

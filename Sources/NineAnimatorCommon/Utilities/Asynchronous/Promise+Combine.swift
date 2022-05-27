@@ -23,9 +23,9 @@ import Foundation
 public extension NineAnimatorPromise {
     /// Converts this promise to an awaitable swift concurrency task.
     func awaitableResult() async throws -> ResultType {
-        var references = AsyncTaskContainer()
+        let references = AsyncTaskContainer()
         
-        return try await withTaskCancellationHandler(operation: {
+        return try await withTaskCancellationHandler {
             let result: ResultType = try await withCheckedThrowingContinuation {
                 [weak self] continuation in
                 // For the duration of this function, referencedTask should maintain reference to this promise
@@ -43,7 +43,7 @@ public extension NineAnimatorPromise {
             }
             
             return result
-        }) {
+        } onCancel: {
             [weak references] in
             references?.cancel()
         }
@@ -51,7 +51,7 @@ public extension NineAnimatorPromise {
     
     /// Creates a new NineAnimatorPromise from a swift concurrency task closure.
     static func `async`(priority: TaskPriority? = nil, _ concurrentClosure: @escaping () async throws -> ResultType?) -> NineAnimatorPromise<ResultType> {
-        return NineAnimatorPromise {
+        NineAnimatorPromise {
             cb in
             let detachedTask = Task(priority: priority) {
                 do {
