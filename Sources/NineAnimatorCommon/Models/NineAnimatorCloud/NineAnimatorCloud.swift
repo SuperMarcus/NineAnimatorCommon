@@ -23,7 +23,13 @@
 import Foundation
 
 public class NineAnimatorCloud {
-    public static let baseUrl = URL(string: "https://9ani.app")!
+    public static let baseUrl: URL = {
+        let apiBaseRequestEndpoint = URL(string: "https://9ani.app/api")!
+        let currentAppVersion = NineAnimatorVersion.current
+        return apiBaseRequestEndpoint
+            .appendingPathComponent("app")
+            .appendingPathComponent(currentAppVersion.releaseTagRepresentation, isDirectory: true)
+    }()
     
     // Placeholder URL
     public static var placeholderArtworkURL: URL {
@@ -31,8 +37,6 @@ public class NineAnimatorCloud {
     }
     
     public private(set) lazy var requestManager = NACloudRequestManager(parent: self)
-    
-//    private let appCenterCrashesDelegate = NAAppCenterCrashesDelegate()
     
     /// Build identifier used to communicate and identify the build with NineAnimator cloud services
     ///
@@ -69,4 +73,14 @@ public class NineAnimatorCloud {
 //        ])
 //        Analytics.enabled = !NineAnimator.default.user.optOutAnalytics
     }
+    
+    // MARK: Internal Variables
+    
+    internal var _cachedAvailabilityData: VersionedAppAvailabilityData?
+    internal var _cachedAvailabilityDataLastUpdate: Date?
+    internal var _availabilityDataRenewTask: NineAnimatorAsyncTask?
+    internal var _requestProcessingQueue = DispatchQueue(
+        label: "com.marcuszhou.nineanimator.NineAnimatorCloud.requestDispatch",
+        qos: .default
+    )
 }

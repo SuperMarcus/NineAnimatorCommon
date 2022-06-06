@@ -141,4 +141,18 @@ public extension Notification.Name {
     /// Fired when the RPC service connection state has changed
     static let presenceControllerConnectionStateDidUpdate =
         Notification.Name("com.marcuszhou.nineanimator.presenceControllerConnectionStateDidUpdate")
+    
+    /// Source availability data did update for a number of sources, or the server pushed a new set of availability data, since any previous `retrieveAvailabilityData()` operation.
+    ///
+    /// The notification object contains the instance of NineAnimatorCloud that pushed the update.
+    static let availabilityDataDidUpdate =
+        Notification.Name("com.marcuszhou.nineanimator.availabilityDataDidUpdate")
+    
+    /// The availability data has been pushed to a particular source. This event is different from `availabilityDataDidUpdate` since it triggers on every source that's being updated.
+    ///
+    /// This event is emitted before `availabilityDataDidUpdate`. The `object` contains the instance of a `Source` object being updated. The `userInfo` dictionary contains the following entries:
+    /// * `outdated`: an instance of `NineAnimatorCloud.SourceAvailabilityData` representing the outdated availability data for this source
+    /// * `updated`: an instance of `NineAnimatorCloud.SourceAvailabilityData` representing the update availability data for this source
+    static let sourceAvailabilityDataDidUpdate =
+        Notification.Name("com.marcuszhou.nineanimator.availabilityDataDidUpdate")
 }

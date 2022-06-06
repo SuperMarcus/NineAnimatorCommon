@@ -31,10 +31,21 @@ open class BaseSource {
     open var endpointURL: URL { URL(string: endpoint)! }
     
     // Default to enabled
-    open var isEnabled: Bool { true }
+    open var isEnabled: Bool {
+        if let availabilityData = self.availabilityData {
+            switch availabilityData.status.status {
+            case .normal: return true
+            case .disabled: return false
+            case .experimental: return NineAnimator.default.user.enableExperimentalSources
+            }
+        }
+        
+        return defaultEnabled
+    }
     
-    @AtomicProperty private var _internalTaskReferences
-        = [ObjectIdentifier: NineAnimatorAsyncTask]()
+    open var defaultEnabled: Bool {
+        NineAnimator.default.user.enableExperimentalSources
+    }
     
     /// The network request manager of the source
     public lazy var requestManager = NABaseSourceRequestManager(parent: self)
@@ -47,6 +58,9 @@ open class BaseSource {
     
     /// The user agent that should be used with requests
     open var sessionUserAgent: String { requestManager.currentIdentity }
+    
+    /// Previously retrieved availability data for the source
+    public private(set) var availabilityData: NineAnimatorCloud.SourceAvailabilityData?
     
     public init(with parent: NineAnimator) {
         self.parent = parent
@@ -95,6 +109,8 @@ open class BaseSource {
             } else { return nil }
         }
     }
+    
+    @AtomicProperty private var _internalTaskReferences = [ObjectIdentifier: NineAnimatorAsyncTask]()
 }
 
 // MARK: - Internal Task Management
@@ -111,5 +127,20 @@ public extension BaseSource {
         _ = __internalTaskReferences.mutate {
             $0.removeValue(forKey: ObjectIdentifier(task))
         }
+    }
+}
+
+// MARK: - Availability
+internal extension BaseSource {
+    func onAvailabilityUpdate(newAvailabilityData updatedData: NineAnimatorCloud.SourceAvailabilityData) {
+        Log.debug("[BaseSource] %@ has received availability data, status last updated on %@.", (self as? Source)?.name ?? "Unknown Source", updatedData.status.updateDate)
+        let replacingAvailabilityData = self.availabilityData
+        self.availabilityData = updatedData
+        
+        // Post notification
+        NotificationCenter.default.post(name: .sourceAvailabilityDataDidUpdate, object: self, userInfo: [
+            "outdated": replacingAvailabilityData as Any,
+            "updated": updatedData
+        ])
     }
 }

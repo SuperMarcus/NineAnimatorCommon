@@ -60,6 +60,9 @@ public class NineAnimator: Alamofire.SessionDelegate {
     /// NineAnimator Cloud services instance
     public private(set) var cloud = NineAnimatorCloud()
     
+    /// Loaded NineAnimator modules
+    public internal(set) var modules = [NativeModule]()
+    
     private let mainAdditionalHeaders: HTTPHeaders = {
         var headers = HTTPHeaders.default
         headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.1 Safari/605.1.15"
@@ -113,6 +116,9 @@ public class NineAnimator: Alamofire.SessionDelegate {
     
     /// Chained image modifiers
     internal var _imageResourceModifiers = [Kingfisher.ImageDownloadRequestModifier]()
+    
+    /// Indicates if all native modules have been loaded
+    internal var _areModulesLoaded = false
     
     internal init() {
         super.init(fileManager: .default)
