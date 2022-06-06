@@ -22,7 +22,11 @@ import Foundation
 public extension NineAnimatorCloud {
     /// Check to ensure that availablility data has been loaded into memory
     func isAvailabilityDataCached() -> Bool {
-        _cachedAvailabilityData != nil
+        if let cachedData = _cachedAvailabilityData, cachedData.version.version == .current {
+            return true
+        }
+        
+        return false
     }
 }
 
