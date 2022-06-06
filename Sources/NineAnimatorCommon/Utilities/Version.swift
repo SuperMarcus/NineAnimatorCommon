@@ -141,7 +141,7 @@ public extension NineAnimatorVersion {
     }
     
     var releaseTagRepresentation: String {
-        "\(major).\(minor)\(patch != 0 ? ".\(patch)" : "")-\(build)"
+        "\(major).\(minor).\(patch)-\(build)"
     }
     
     static func < (lhs: NineAnimatorVersion, rhs: NineAnimatorVersion) -> Bool {

@@ -19,6 +19,13 @@
 
 import Foundation
 
+public extension NineAnimatorCloud {
+    /// Check to ensure that availablility data has been loaded into memory
+    func isAvailabilityDataCached() -> Bool {
+        _cachedAvailabilityData != nil
+    }
+}
+
 // MARK: - Type Definitions
 public extension NineAnimatorCloud {
     static var availablilityDataRenewInterval: TimeInterval {

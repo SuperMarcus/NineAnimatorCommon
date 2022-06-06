@@ -41,6 +41,12 @@ public extension NineAnimatorCloud {
             return .success(cachedData)
         }
         
+        // Cancels the system-owned renewal task if an external request was initiated. This prevents multiple
+        // requests to the endpoint at the same time.
+        if case .some = self._availabilityDataRenewTask {
+            self._availabilityDataRenewTask = nil
+        }
+        
         return self._tryRenewAvailabilityData()
     }
     
@@ -49,7 +55,6 @@ public extension NineAnimatorCloud {
         Log.debug("[NineAnimatorCloud] Renewing availability data...")
         _availabilityDataRenewTask = self._tryRenewAvailabilityData()
             .dispatch(on: _requestProcessingQueue)
-            .defer { _ in self._availabilityDataRenewTask = nil }
             .error {
                 error in Log.error("[NineAnimatorCloud] Failed to renew availability data due to error: %@", error)
             }
@@ -78,7 +83,7 @@ public extension NineAnimatorCloud {
 internal extension NineAnimatorCloud {
     func _tryRenewAvailabilityData() -> NineAnimatorPromise<VersionedAppAvailabilityData> {
         // Wrapping a promise within promise here. Definetly not a good practice...
-        return .init(queue: self._requestProcessingQueue) {
+        .init(queue: self._requestProcessingQueue) {
             errorSilencedCallback in
             // Copy the previous data for reference
             let previouslyCachedData = self._cachedAvailabilityData
