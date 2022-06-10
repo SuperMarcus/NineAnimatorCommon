@@ -219,11 +219,33 @@ public class NACloudRequestManager: NAEndpointRelativeRequestManager {
         headers: HTTPHeaders? = nil
     ) -> NineAnimatorPromise<ResponseType> {
         // Init decoder for standard NACloud API responses
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-        
         let customDecoder = JSONDecoder()
-        customDecoder.dateDecodingStrategy = .formatted(dateFormatter)
+        customDecoder.dateDecodingStrategy = .custom {
+            decoder in
+            let container = try decoder.singleValueContainer()
+            let stringRepresentation = try container.decode(String.self)
+
+            // Try Date.toJSON()'s formatting
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+            let isoDateFormatter = ISO8601DateFormatter()
+
+            if let milliDateFmtDecoded = dateFormatter.date(from: stringRepresentation) {
+                return milliDateFmtDecoded
+            } else {
+                Log.error("[NACloudRequestManager] Failed to decode date string '%@' with standard Date.toJSON() formatting. Restorting to modifying the date string and decoding it with ISO8601 decoder...this may cause the dates to loose some percisions.", stringRepresentation)
+            }
+
+            if let intStringFmt = stringRepresentation.split(separator: ".").first,
+               let isoDateFmtDecoded = isoDateFormatter.date(from: "\(intStringFmt)Z") {
+                return isoDateFmtDecoded
+            } else {
+                Log.error("[NACloudRequestManager] Failed to decode date string '%@' with modified integral ISO8601 formatting...falling back to Date constructor.", stringRepresentation)
+            }
+
+            return try container.decode(Date.self)
+        }
+        
         customDecoder.keyDecodingStrategy = .convertFromSnakeCase
         customDecoder.dataDecodingStrategy = .base64
         
