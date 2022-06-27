@@ -35,7 +35,7 @@ open class BaseListingService: SessionDelegate {
                 // Store the properties under the application support directory
                 let applicationSupportDirectory = try fs.url(
                     for: .applicationSupportDirectory,
-                    in: .allDomainsMask,
+                    in: .userDomainMask,
                     appropriateFor: nil,
                     create: true
                 )
@@ -64,7 +64,7 @@ open class BaseListingService: SessionDelegate {
                 // Store the properties under the application support directory
                 let applicationSupportDirectory = try fs.url(
                     for: .applicationSupportDirectory,
-                    in: .allDomainsMask,
+                    in: .userDomainMask,
                     appropriateFor: nil,
                     create: true
                 )

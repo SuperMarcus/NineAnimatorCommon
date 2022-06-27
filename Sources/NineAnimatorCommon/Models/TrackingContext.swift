@@ -289,7 +289,7 @@ public class TrackingContext {
         let fileManager = FileManager.default
         let applicationSupportDirectory = try fileManager.url(
             for: .applicationSupportDirectory,
-            in: .allDomainsMask,
+            in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )
@@ -499,14 +499,14 @@ public extension TrackingContext {
     func save() {
         do {
             // Write to configuration url
-            try export().write(to: stateConfigurationUrl)
+            try exportToData().write(to: stateConfigurationUrl)
         } catch {
             Log.error("Unable to persist tracking context state data: %@", error)
         }
     }
     
     /// Serialize this `TrackingContext` into `Data`
-    func export() throws -> Data {
+    func exportToData() throws -> Data {
         var persistingInformation = [String: Any]()
         persistingInformation[Keys.protocol] = 1
         persistingInformation[Keys.creationDate] = creationDate

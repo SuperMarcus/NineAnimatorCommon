@@ -66,7 +66,7 @@ private extension CachedDownloadsToAppSupportDataMigrator {
             // Retrieve cache directory
             let cacheDirectory = try fs.url(
                 for: .cachesDirectory,
-                in: .allDomainsMask,
+                in: .userDomainMask,
                 appropriateFor: nil,
                 create: false
             ).appendingPathComponent("com.marcuszhou.nineanimator.OfflineContents")
@@ -80,7 +80,7 @@ private extension CachedDownloadsToAppSupportDataMigrator {
             // Retrieve the new offline contents directory in application support
             let documentsDirectory = try fs.url(
                 for: .applicationSupportDirectory,
-                in: .allDomainsMask,
+                in: .userDomainMask,
                 appropriateFor: nil,
                 create: true
             ).appendingPathComponent("com.marcuszhou.nineanimator.OfflineContents")

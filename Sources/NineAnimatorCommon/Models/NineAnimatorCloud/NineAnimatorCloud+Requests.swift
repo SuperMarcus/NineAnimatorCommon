@@ -165,7 +165,7 @@ internal extension NineAnimatorCloud {
     func _retrieveAvailabilityDataCacheFilePath() throws -> URL {
         let appSupportDir = try FileManager.default.url(
             for: .applicationSupportDirectory,
-            in: .allDomainsMask,
+            in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )
