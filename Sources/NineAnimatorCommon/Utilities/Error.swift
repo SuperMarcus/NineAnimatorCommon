@@ -423,4 +423,35 @@ public extension NineAnimatorError {
             super.init(coder: aDecoder)
         }
     }
+    
+    /// Data signature error
+    class SignatureError: NineAnimatorError {
+        public var resourceUrl: URL? {
+            userInfo["resourceUrl"] as? URL
+        }
+        
+        public var expectedSignature: Data {
+            (userInfo["expectedSignature"] as? Data) ?? .init()
+        }
+        
+        public init(resourceUrl: URL?, expectedSignature: Data) {
+            var userInfo = [String: Any]()
+            userInfo["expectedSignature"] = expectedSignature
+            
+            if let resourceUrl = resourceUrl {
+                userInfo["resourceInfo"] = resourceUrl
+            }
+            
+            super.init(
+                12,
+                message: "NineAnimator failed to load a resource",
+                failiureReason: "One of the resources failed the data integrity validation",
+                userInfo: userInfo
+            )
+        }
+        
+        public required init?(coder aDecoder: NSCoder) {
+            super.init(coder: aDecoder)
+        }
+    }
 }

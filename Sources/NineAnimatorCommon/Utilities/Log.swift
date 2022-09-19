@@ -290,6 +290,13 @@ public extension NineAnimatorLogger {
     }
 }
 
+public extension NineAnimatorLogger.LogMessage {
+    /// Retrieves the formatted log message
+    var formattedMessage: String {
+        String(format: self.message, arguments: self.parameters)
+    }
+}
+
 // MARK: - Crash Reporter
 private extension NineAnimatorLogger {
     /// Replace the original top level exception handler with ours

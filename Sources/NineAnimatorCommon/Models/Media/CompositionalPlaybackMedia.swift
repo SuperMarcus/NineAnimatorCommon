@@ -25,8 +25,6 @@ import OpenCastSwift
 
 /// A media container for retrieved media capable of modifying loading requests
 public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourceLoaderDelegate {
-    public typealias SubtitleComposition = (url: URL, name: String, language: String)
-    
     public let url: URL
     public let parent: Episode
     public let contentType: String
@@ -159,16 +157,16 @@ internal extension CompositionalPlaybackMedia {
             numFormatter.minimumIntegerDigits = 1
             
             return """
-#EXTM3U
-#EXT-X-VERSION:3
-#EXT-X-MEDIA-SEQUENCE:1
-#EXT-X-PLAYLIST-TYPE:VOD
-#EXT-X-ALLOW-CACHE:NO
-#EXT-X-TARGETDURATION:\(Int(vttEndTimestamp))
-#EXTINF:\(numFormatter.string(from: NSNumber(value: vttEndTimestamp)) ?? "0.000"), no desc
-\(subtitleTrackInformation.url.absoluteString)
-#EXT-X-ENDLIST
-""".data(using: .utf8)
+                #EXTM3U
+                #EXT-X-VERSION:3
+                #EXT-X-MEDIA-SEQUENCE:1
+                #EXT-X-PLAYLIST-TYPE:VOD
+                #EXT-X-ALLOW-CACHE:NO
+                #EXT-X-TARGETDURATION:\(Int(vttEndTimestamp))
+                #EXTINF:\(numFormatter.string(from: NSNumber(value: vttEndTimestamp)) ?? "0.000"), no desc
+                \(subtitleTrackInformation.url.absoluteString)
+                #EXT-X-ENDLIST
+                """.data(using: .utf8)
         } .error {
             [weak self] in
             guard self != nil else { return }
@@ -227,10 +225,25 @@ internal extension CompositionalPlaybackMedia {
                         
                         // Construct subtitle group
                         let subtitles = subtitles.map {
-                            url, name, language in "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"\(subtitleCompositionGroupId)\",NAME=\"\(name)\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE=\"\(language)\",URI=\"\(injectionSubtitlePlaylistScheme)://subtitle.m3u8#\(url.uniqueHashingIdentifier)\""
-                        }.joined(separator: "\n")
+                            subtitleTrack in
+                            let properties = [
+                                ("TYPE", "SUBTITLES"),
+                                ("GROUP-ID", "\"\(subtitleCompositionGroupId)\""),
+                                ("NAME", "\"\(subtitleTrack.name)\""),
+                                ("DEFAULT", subtitleTrack.default ? "YES" : "NO"),
+                                ("AUTOSELECT", subtitleTrack.autoselect ? "YES" : "NO"),
+                                ("FORCED", subtitleTrack.forced ? "YES" : "NO"),
+                                ("LANGUAGE", "\"\(subtitleTrack.language)\""),
+                                ("URI", "\"\(injectionSubtitlePlaylistScheme)://subtitle.m3u8#\(subtitleTrack.url.uniqueHashingIdentifier)\"")
+                            ]
+                            let encodedProperties = properties.map {
+                                "\($0.0)=\($0.1)"
+                            }.joined(separator: ",")
+                            return "#EXT-X-MEDIA:\(encodedProperties)"
+//                            return "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"\(subtitleCompositionGroupId)\",NAME=\"\(subtitleTrack.name)\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE=\"\(subtitleTrack.language)\",URI=\"\(injectionSubtitlePlaylistScheme)://subtitle.m3u8#\(subtitleTrack.url.uniqueHashingIdentifier)\""
+                        } .joined(separator: "\n")
                         
-                        Log.info(">>>> DEBUG: Responded with playlist data")
+                        Log.info(">>>> DEBUG: Responded with playlist data:\n%@", subtitles)
                         
                         // Convert to data
                         let playlistData = "\(playlistContent.trimmingCharacters(in: .whitespacesAndNewlines))\n\(subtitles)\n".data(using: .utf8) ?? playlistResponse
@@ -369,4 +382,25 @@ public extension CompositionalPlaybackMedia {
         ).tryUnwrap().takeRetainedValue()
         return inferredContentUTI as String
     } */
+}
+
+public extension CompositionalPlaybackMedia {
+    struct SubtitleComposition {
+        public var url: URL
+        public var name: String
+        public var language: String
+        
+        public var `default`: Bool
+        public var autoselect: Bool
+        public var forced: Bool
+        
+        public init(url: URL, name: String, language: String, `default`: Bool = false, autoselect: Bool = false, forced: Bool = false) {
+            self.url = url
+            self.name = name
+            self.language = language
+            self.`default` = `default`
+            self.autoselect = autoselect
+            self.forced = forced
+        }
+    }
 }
