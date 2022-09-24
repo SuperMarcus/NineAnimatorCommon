@@ -33,9 +33,11 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
     
     /// Playback session identifier
     public var sessionId: String? {
+        #if !targetEnvironment(macCatalyst)
         if #available(iOS 16.0, *) {
             return self.asset?.httpSessionIdentifier.uuidString
         }
+        #endif
         
         return nil
     }
