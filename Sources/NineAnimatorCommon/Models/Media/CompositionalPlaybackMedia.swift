@@ -31,6 +31,28 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
     public let headers: [String: String]
     public let subtitles: [SubtitleComposition]
     
+    /// Playback session identifier
+    public var sessionId: String? {
+        if #available(iOS 16.0, *) {
+            return self.asset?.httpSessionIdentifier.uuidString
+        }
+        
+        return nil
+    }
+    
+    private var requestHeaders: HTTPHeaders {
+        var requestHeaders = HTTPHeaders(headers)
+        
+        if let sessionId {
+            requestHeaders.add(name: "X-Playback-Session-Id", value: sessionId)
+        }
+        
+        return requestHeaders
+    }
+    
+    /// Previously created URL asset for this playback media
+    private weak var asset: AVURLAsset?
+    
     /// Strong references to the loading tasks/promises
     private var loadingTasks = [NSObject: NineAnimatorAsyncTask]()
     
@@ -58,9 +80,6 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
                 return false
             }
             
-            // Commenting due to large amount of logs generated when requesting segments
-            // Log.info(">>>> DEBUG: Requested to load '%@'", requestingResourceUrl.absoluteString)
-            
             switch requestingResourceUrl.scheme {
             case interceptResourceScheme:
                 return try loadingRequestInterception(
@@ -72,11 +91,6 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
                     requestingResourceUrl: requestingResourceUrl,
                     loadingRequest: loadingRequest
                 )
-            /* case injectionCachedVttScheme:
-                return try loadingRequestCachedVtt(
-                    requestingResourceUrl: requestingResourceUrl,
-                    loadingRequest: loadingRequest
-                ) */
             default: throw NineAnimatorError.urlError
             }
         } catch { Log.error("[CompositionalPlaybackMedia] Loading error: %@", error) }
@@ -94,35 +108,6 @@ public class CompositionalPlaybackMedia: NSObject, PlaybackMedia, AVAssetResourc
 
 // MARK: - Playlist modification
 internal extension CompositionalPlaybackMedia {
-    /* private func loadingRequestCachedVtt(requestingResourceUrl: URL, loadingRequest: AVAssetResourceLoadingRequest) throws -> Bool {
-        Log.info(">>>> DEBUG: Requested to load subtitle at %@", requestingResourceUrl.absoluteString)
-        loadingTasks[loadingRequest] = requestVtt(requestingResourceUrl).error {
-            error in loadingRequest.finishLoading(with: error)
-            Log.info(">>>> DEBUG: Sub load finished with error %@", error)
-        } .finally {
-            [weak self] cachedVttData in
-            guard let self = self else { return }
-            
-            // Respond with the cached vtt data
-            if let dataRequest = loadingRequest.dataRequest {
-                dataRequest.respond(with: cachedVttData)
-            }
-            
-            // Fill in data information
-            if let infoRequest = loadingRequest.contentInformationRequest {
-                infoRequest.contentType = try? self.contentType(fromMimeType: "text/vtt")
-                infoRequest.contentLength = Int64(cachedVttData.count)
-                infoRequest.isByteRangeAccessSupported = false
-            }
-            
-            Log.info(">>>> DEBUG: finished loading vtt len %@", cachedVttData.count)
-            
-            // Informs that the loading has been completed
-            loadingRequest.finishLoading()
-        }
-        return true
-    } */
-    
     /// Generates and return subtitle playlists
     private func loadingRequestInjectSubtitle(requestingResourceUrl: URL, loadingRequest: AVAssetResourceLoadingRequest) throws -> Bool {
         // Obtain the subtitle information
@@ -188,7 +173,7 @@ internal extension CompositionalPlaybackMedia {
                 infoRequest.isByteRangeAccessSupported = false
             }
             
-            Log.info(">>> DEBUG: Responded with subtitle playlist content %@", String(data: generatedPlaylist, encoding: .utf8)!)
+            Log.debug("[CompositionalPlaybackMedia] Responded with subtitle playlist content %@", String(data: generatedPlaylist, encoding: .utf8)!)
             
             // Informs that the loading has been completed
             loadingRequest.finishLoading()
@@ -207,7 +192,7 @@ internal extension CompositionalPlaybackMedia {
             loadingTasks[loadingRequest] = AF.request(
                 originalUrl,
                 method: .get,
-                headers: HTTPHeaders(headers)
+                headers: self.requestHeaders
             ) .responseData {
                 [subtitleCompositionGroupId, injectionSubtitlePlaylistScheme, subtitles] response in
                 do {
@@ -217,11 +202,17 @@ internal extension CompositionalPlaybackMedia {
                         let playlistContent = try String(
                             data: playlistResponse,
                             encoding: .utf8
-                        ).tryUnwrap(.decodeError).replacingOccurrences(
+                        ) .tryUnwrap(.decodeError)
+                          .replacingOccurrences(
                             of: "(#EXT-X-STREAM-INF:.+)\\n",
                             with: "$1,SUBTITLES=\"\(subtitleCompositionGroupId)\"\n",
                             options: [.regularExpression]
-                        )
+                          ) .replacingOccurrences(
+                            of: "#EXTM3U\\s*",
+                            with: "",
+                            options: [.regularExpression]
+                          )
+                          .trimmingCharacters(in: .whitespacesAndNewlines)
                         
                         // Construct subtitle group
                         let subtitles = subtitles.map {
@@ -230,6 +221,7 @@ internal extension CompositionalPlaybackMedia {
                                 ("TYPE", "SUBTITLES"),
                                 ("GROUP-ID", "\"\(subtitleCompositionGroupId)\""),
                                 ("NAME", "\"\(subtitleTrack.name)\""),
+                                ("CHARACTERISTICS", "\"public.accessibility.transcribes-spoken-dialog\""),
                                 ("DEFAULT", subtitleTrack.default ? "YES" : "NO"),
                                 ("AUTOSELECT", subtitleTrack.autoselect ? "YES" : "NO"),
                                 ("FORCED", subtitleTrack.forced ? "YES" : "NO"),
@@ -240,13 +232,12 @@ internal extension CompositionalPlaybackMedia {
                                 "\($0.0)=\($0.1)"
                             }.joined(separator: ",")
                             return "#EXT-X-MEDIA:\(encodedProperties)"
-//                            return "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"\(subtitleCompositionGroupId)\",NAME=\"\(subtitleTrack.name)\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE=\"\(subtitleTrack.language)\",URI=\"\(injectionSubtitlePlaylistScheme)://subtitle.m3u8#\(subtitleTrack.url.uniqueHashingIdentifier)\""
                         } .joined(separator: "\n")
                         
-                        Log.info(">>>> DEBUG: Responded with playlist data:\n%@", subtitles)
-                        
                         // Convert to data
-                        let playlistData = "\(playlistContent.trimmingCharacters(in: .whitespacesAndNewlines))\n\(subtitles)\n".data(using: .utf8) ?? playlistResponse
+                        let playlistData = "#EXTM3U\n\(subtitles)\n\(playlistContent)".data(using: .utf8) ?? playlistResponse
+                        
+                        Log.debug("[CompositionalPlaybackMedia] Responded with playlist data:\n%@", String(decoding: playlistData, as: UTF8.self))
                         
                         // Respond with modified playlist data
                         if let dataRequest = loadingRequest.dataRequest {
@@ -318,13 +309,21 @@ internal extension CompositionalPlaybackMedia {
 // MARK: - PlaybackMedia
 public extension CompositionalPlaybackMedia {
     var avPlayerItem: AVPlayerItem {
+        if let asset = self.asset {
+            Log.debug("[CompositionalPlaybackMedia] Returning cached AVAsset for item with URL: %@", url)
+            return AVPlayerItem(asset: asset)
+        }
+        
         let schemedUrl = (try? swapScheme(forUrl: url, withNewScheme: interceptResourceScheme)) ?? url
-        Log.info(">>>> DEBUG: Scheme swapped for url %@", schemedUrl)
+        Log.debug("[CompositionalPlaybackMedia] Creating AVAsset with scheme swapped for url %@", schemedUrl)
+        
         let asset = AVURLAsset(
             url: schemedUrl,
             options: ["AVURLAssetHTTPHeaderFieldsKey": headers]
         )
         asset.resourceLoader.setDelegate(self, queue: delegateQueue)
+        self.asset = asset
+        
         return AVPlayerItem(asset: asset)
     }
     
@@ -372,16 +371,6 @@ public extension CompositionalPlaybackMedia {
         components.scheme = newScheme
         return try components.url.tryUnwrap()
     }
-    
-    /// Retrieve UTI from MIME type
-    /* private func contentType(fromMimeType mime: String) throws -> String {
-        let inferredContentUTI = try UTTypeCreatePreferredIdentifierForTag(
-            kUTTagClassMIMEType,
-            mime as CFString,
-            nil
-        ).tryUnwrap().takeRetainedValue()
-        return inferredContentUTI as String
-    } */
 }
 
 public extension CompositionalPlaybackMedia {
