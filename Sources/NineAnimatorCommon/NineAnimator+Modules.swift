@@ -34,14 +34,36 @@ public extension NineAnimator {
             }
         }
     }
+    
+    func registerModule<Module: NineAnimatorModule>(type: Module.Type) {
+        let moduleBundle = Bundle(for: type)
+        if !self.modules.contains(where: { existing in existing.bundle.bundleURL == moduleBundle.bundleURL }) {
+            let moduleClassFullName = String(reflecting: type)
+            let moduleClassSplit = moduleClassFullName.split(separator: ".")
+            
+            if moduleClassSplit.count == 2 {
+                let moduleNamespace = String(moduleClassSplit[0])
+                let moduleName = String(moduleClassSplit[1])
+                let module = NativeModule(
+                    name: moduleName,
+                    namespace: moduleNamespace,
+                    bundle: moduleBundle,
+                    initClass: type,
+                    initFunc: type.initModule(with:)
+                )
+                self.modules.append(module)
+                Log.info("[NineAnimator] Registered custom module %@ (%@, %@)", moduleName, moduleBundle.bundleIdentifier ?? "Unknown ID", moduleBundle.bundlePath)
+            }
+        }
+    }
 }
 
 public extension NineAnimator {
     struct NativeModule: Hashable {
-        var name: String
-        var namespace: String
-        var bundle: Bundle
-        var initClass: AnyClass
+        public internal(set) var name: String
+        public internal(set) var namespace: String
+        public internal(set) var bundle: Bundle
+        public internal(set) var initClass: AnyClass
         
         // Private values
         fileprivate var initFunc: (NineAnimator) -> Void
@@ -62,29 +84,35 @@ internal extension NineAnimator {
     func _discoverModules() -> [NativeModule] {
         let modulesExecutablePrefix = "NineAnimator"
         
-        return Bundle.allFrameworks.compactMap {
+        return Bundle.allFrameworks.reduce(into: self.modules) {
             // Find all code bundles with the NineAnimator prefix
-            fw in
+            discoveredModules, fw in
+            // Do no re-add module
+            if discoveredModules.contains(where: { existing in existing.bundle.bundleURL == fw.bundleURL }) {
+                return
+            }
+            
             let fwNamespace = fw.bundleURL.deletingPathExtension().lastPathComponent
             guard fwNamespace.hasPrefix(modulesExecutablePrefix) else {
-                return nil
+                return
             }
             
             let moduleName = fwNamespace[modulesExecutablePrefix.count...]
             guard let moduleInitializationClass = fw.classNamed("\(fwNamespace).\(moduleName)"),
                 let moduleInitFunc = moduleInitializationClass.initModule(with:) else {
-                return nil
+                return
             }
             
             Log.info("[NineAnimator] Found module %@ (%@, %@)", moduleName, fw.bundleIdentifier ?? "Unknown ID", fw.bundlePath)
             
-            return NativeModule(
+            let newModule = NativeModule(
                 name: moduleName,
                 namespace: fwNamespace,
                 bundle: fw,
                 initClass: moduleInitializationClass,
                 initFunc: moduleInitFunc
             )
+            discoveredModules.append(newModule)
         }
     }
 }

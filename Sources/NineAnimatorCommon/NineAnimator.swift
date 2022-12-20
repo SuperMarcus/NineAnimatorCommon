@@ -30,6 +30,12 @@ public class NineAnimator: Alamofire.SessionDelegate {
     /// Generate random application UUID
     public internal(set) static var applicationRuntimeUuid = UUID()
     
+    /// NineAnimatorCore interfaces
+    public static var coreManager: (any CoreSourceManager)? {
+        let coreManagerType = NSClassFromString("NineAnimatorCore.NACoreSourceManager") as? CoreSourceManager.Type
+        return coreManagerType?.shared
+    }
+    
     /// Random runtime UUID bytes
     public class var applicationRuntimeUuidData: Data {
         withUnsafePointer(to: &applicationRuntimeUuid) {
@@ -228,15 +234,22 @@ public extension NineAnimator {
     
     /// Find the source with name
     func source(with name: String) -> Source? {
-        if sources.isEmpty {
-            Log.error("[NineAnimator] No source has been registered!! Has NineAnimator been properly initialized?")
-            return nil
+        // Lookup native source first
+        if let nativeSourceByName = sources[name] {
+            return nativeSourceByName
+        } else if let nativeSourceByAlias = sources.values.first(where: { $0.aliases.contains(name) }) {
+            return nativeSourceByAlias
         }
         
-        // Lookup by name directory, else search for aliases
-        return sources[name] ?? sources.values.first {
-            $0.aliases.contains(name)
+        // Lookup NACore source if core manager exists
+        if let coreManager = NineAnimator.coreManager,
+           let coreSource = coreManager.source(with: name) {
+            return coreSource
+        } else if sources.isEmpty {
+            Log.error("[NineAnimator] No native or NACore source was registered with name %@. This may cause undeterministic behaviors or crash the app.", name)
         }
+        
+        return nil
     }
 }
 

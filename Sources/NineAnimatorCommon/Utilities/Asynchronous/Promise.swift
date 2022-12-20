@@ -77,10 +77,6 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
     /// Keep a reference to the previous promise
     private var chainedReference: (NineAnimatorAsyncTask & NineAnimatorPromiseProtocol)?
     
-    /// The DispatchQueue in which the task and the subsequent
-    /// promises will run in
-    private var queue: DispatchQueue
-    
     /// Additional flags to be passed to the execusion of blocks
     private var queueFlags: DispatchWorkItemFlags
     
@@ -92,6 +88,10 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
     
     /// Thread safety
     private var semaphore: DispatchSemaphore
+    
+    /// The DispatchQueue in which the task and the subsequent
+    /// promises will run in
+    internal var queue: DispatchQueue
     
     public typealias NineAnimatorPromiseCallback = NineAnimatorCallback<ResultType>
     public typealias NineAnimatorPromiseInitialTask = (@escaping NineAnimatorPromiseCallback) -> NineAnimatorAsyncTask?
@@ -136,8 +136,13 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
         deferBlock?(self)
         
         if let resolver = chainedPromiseCallback {
-            // Runs the handler in another tick
-            queue.async(flags: queueFlags) { resolver(value) }
+            // Runs the handler in another tick, but preserve the reference to self
+            // in case resolver releases us
+            queue.async(flags: queueFlags) {
+                [self] in
+                resolver(value)
+                _ = self
+            }
         } else { Log.error("[NineAnimatorPromise] Promise has no resolver") }
     }
     
@@ -172,7 +177,9 @@ public class NineAnimatorPromise<ResultType>: NineAnimatorAsyncTask, NineAnimato
         if let handler = chainedErrorCallback {
             // Runs the handler in another tick
             queue.async(flags: queueFlags) {
+                [self] in
                 handler(error)
+                _ = self
             }
         } else {
             Log.error("[NineAnimatorPromise] Promise is resolved with an error before an error handler is set.")
