@@ -24,10 +24,12 @@ public extension NineAnimatorPromise {
     /// Converts this promise to an awaitable swift concurrency task.
     func awaitableResult() async throws -> ResultType {
         let references = AsyncTaskContainer()
+        references.add(self)
         
         return try await withTaskCancellationHandler {
+            [weak self, references] in
             let result: ResultType = try await withCheckedThrowingContinuation {
-                [weak self] continuation in
+                [weak self, references] continuation in
                 // For the duration of this function, referencedTask should maintain reference to this promise
                 let newTask = self?.error {
                     continuation.resume(throwing: $0)
@@ -62,6 +64,24 @@ public extension NineAnimatorPromise {
                 }
             }
             return AnyCancellable(detachedTask)
+        }
+    }
+    
+    /// Chain to the current promise by executing a swift concurrency async closure
+    func thenAsync<NextResultType>(priority: TaskPriority? = nil, _ concurrentClosure: @escaping (ResultType) async throws -> NextResultType?) -> NineAnimatorPromise<NextResultType> {
+        self.thenPromise {
+            results in NineAnimatorPromise<NextResultType>(queue: self.queue) {
+                cb in
+                let detachedTask = Task(priority: priority) {
+                    do {
+                        let result = try await concurrentClosure(results)
+                        cb(result, nil)
+                    } catch {
+                        cb(nil, error)
+                    }
+                }
+                return AnyCancellable(detachedTask)
+            }
         }
     }
 }

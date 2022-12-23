@@ -149,7 +149,7 @@ public extension NineAnimator {
             "NineAnimatorCommon"
         ]
 
-        let candidates = [
+        var candidates = [
             // Bundle should be present here when the package is linked into an App.
             Bundle.main.resourceURL,
 
@@ -159,6 +159,17 @@ public extension NineAnimator {
             // For command-line tools.
             Bundle.main.bundleURL
         ]
+        
+        // Running with unit test agent
+        if Bundle.main.bundleURL.lastPathComponent == "Agents" {
+            let naCommonFramework = Bundle(for: BundleFinder.self).resourceURL
+            let targetProductsUrl = naCommonFramework?
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+            if let targetProductsUrl {
+                candidates.append(targetProductsUrl)
+            }
+        }
 
         for candidate in candidates {
             for bundleName in possibleBundleNames {

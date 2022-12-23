@@ -53,11 +53,16 @@ public extension NineAnimatorPromise {
         
         private var queue: DispatchQueue
         
-        init(_ promiseProducer: @escaping () throws -> NineAnimatorPromise?, queue: DispatchQueue) {
+        init(_ promiseProducer: (() throws -> NineAnimatorPromise?)?, queue: DispatchQueue) {
             self.promiseProducer = promiseProducer
             self.pendingPromises = .weakObjects()
             self.lock = NSLock()
             self.queue = queue
+        }
+        
+        internal convenience init(result: Result<ResultType, Error>, queue: DispatchQueue) {
+            self.init(nil, queue: queue)
+            self.result = result
         }
         
         /// Checks if the original promise has been resolved
@@ -159,5 +164,12 @@ public extension NineAnimatorPromise {
             // Remove all pending objects
             self.pendingPromises.removeAllObjects()
         }
+    }
+}
+
+public extension NineAnimatorPromise.RunOnce {
+    /// Creates a constant ``NineAnimatorPromise.RunOnce`` object. This avoids creating any promise objects and should be more efficient.
+    static func withResult(_ result: Result<ResultType, Error>, queue: DispatchQueue = .global()) -> NineAnimatorPromise<ResultType>.RunOnce {
+        .init(result: result, queue: queue)
     }
 }

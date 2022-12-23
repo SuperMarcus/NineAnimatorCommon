@@ -28,7 +28,7 @@ open class BaseSource {
     
     open var endpoint: String { "" }
     
-    open var endpointURL: URL { URL(string: endpoint)! }
+    open var endpointURL: URL { URL(string: endpoint) ?? URL(string: "https://dummy.9ani.app")! }
     
     // Default to enabled
     open var isEnabled: Bool {

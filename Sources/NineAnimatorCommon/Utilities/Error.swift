@@ -364,6 +364,10 @@ public extension NineAnimatorError {
         /// The JavaScript error object
         public var errorObject: JSManagedValue?
         
+        public override var localizedDescription: String {
+            "NineAnimatorCore: \(self.message)"
+        }
+        
         public init(errorObject: JSValue, name: String, message: String) {
             super.init(10, message: "NineAnimatorCore encountered an error", failiureReason: message, userInfo: [
                 "errorName": name,
