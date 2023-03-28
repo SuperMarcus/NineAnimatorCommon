@@ -364,7 +364,7 @@ public extension NineAnimatorError {
         /// The JavaScript error object
         public var errorObject: JSManagedValue?
         
-        public override var localizedDescription: String {
+        override public var localizedDescription: String {
             "NineAnimatorCore: \(self.message)"
         }
         

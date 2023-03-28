@@ -107,6 +107,10 @@ public extension NineAnimatorPromise {
             }
         }
         
+        public func startInBackground() {
+            self.runOriginalPromise()
+        }
+        
         private func runOriginalPromise() {
             self.lock.lock()
             
