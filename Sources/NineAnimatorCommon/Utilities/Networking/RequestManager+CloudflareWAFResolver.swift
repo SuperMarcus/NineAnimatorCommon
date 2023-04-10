@@ -40,8 +40,8 @@ public class CloudflareWAFResolver {
             serverHeaderField.lowercased().hasPrefix("cloudflare"),
             let body = body,
             let bodyString = String(data: body, encoding: .utf8),
-            bodyString.contains("challenge-form"),
-            bodyString.localizedCaseInsensitiveContains("cloudflare") {
+            bodyString.contains("challenge-form") || bodyString.contains("challenge-platform"),
+            bodyString.localizedCaseInsensitiveContains("Just a moment...") {
             // Save the requestingUrl for modification
             var passthroughUrl: URL?
             var responseParameters: [String: String]?
