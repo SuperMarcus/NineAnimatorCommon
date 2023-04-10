@@ -40,7 +40,7 @@ open class NARequestManager: NSObject {
     }()
     
     /// Current User-Agent for requests made from this request manager
-    public private(set) var currentIdentity = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1 Safari/605.1.15"
+    public private(set) var currentIdentity = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0"
     
     /// Retrieve/set the credential manager for this request manager
     public var credentialManager: NACredentialManager?
