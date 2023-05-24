@@ -57,6 +57,8 @@ public extension KingfisherError.ResponseErrorReason {
             return "The data modifying delegate returned `nil` for the downloaded data."
         case .noURLResponse:
             return "No URL response received."
+        case .cancelledByDelegate:
+            return "Request was cancelled."
         }
     }
 }
