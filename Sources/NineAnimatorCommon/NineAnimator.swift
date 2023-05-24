@@ -75,6 +75,54 @@ public class NineAnimator: Alamofire.SessionDelegate {
         return headers
     }()
     
+    /// Temporary directory path
+    public let temporaryDirectory: URL = {
+        let fileManager = FileManager.default
+        let tmpDir = fileManager
+            .temporaryDirectory
+            .appendingPathComponent("com.marcuszhou.NineAnimator", isDirectory: true)
+        
+        do {
+            try fileManager.createDirectory(
+                at: tmpDir,
+                withIntermediateDirectories: true
+            )
+        } catch {
+            Log.error("[NineAnimator] Failed to create temporary directory at %@: %@", tmpDir.absoluteString, error)
+        }
+        
+        return tmpDir
+    }()
+    
+    /// Standard directory URL where all of NineAnimator's data should be stored (in the future)
+    public private(set) lazy var dataDirectory: URL = {
+        do {
+            let fileManager = FileManager.default
+            let applicationSupportDirectory = try fileManager.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            let persistentDirectory =  applicationSupportDirectory
+                .appendingPathComponent("com.marcuszhou.NineAnimator", isDirectory: true)
+            
+            do {
+                try fileManager.createDirectory(
+                    at: persistentDirectory,
+                    withIntermediateDirectories: true
+                )
+            } catch {
+                Log.error("[NineAnimator] Failed to create persistent data directory at %@: %@", persistentDirectory.absoluteString, error)
+            }
+            
+            return persistentDirectory
+        } catch {
+            Log.error("[NineAnimator] Failed to locate and create persistent directory: %@", error)
+            return temporaryDirectory
+        }
+    }()
+    
     public private(set) lazy var session: Session = {
         let configuration = URLSessionConfiguration.af.default
         configuration.httpShouldSetCookies = true

@@ -20,9 +20,7 @@
 
 import Foundation
 
-// swiftlint:disable all
-
-internal struct DictionaryCodingKey : CodingKey {
+internal struct DictionaryCodingKey: CodingKey {
     public var stringValue: String
     public var intValue: Int?
 
@@ -48,4 +46,3 @@ internal struct DictionaryCodingKey : CodingKey {
 
     internal static let `super` = DictionaryCodingKey(stringValue: "super")!
 }
-

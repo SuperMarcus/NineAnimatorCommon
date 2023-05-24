@@ -20,11 +20,8 @@
 
 import Foundation
 
-// swiftlint:disable all
+// swiftlint:disable discouraged_optional_boolean
 
-//===----------------------------------------------------------------------===//
-// Dictionary Decoder
-//===----------------------------------------------------------------------===//
 /// `DictionaryDecoder` facilitates the decoding of Dictionary into semantic `Decodable` types.
 open class DictionaryDecoder {
     // MARK: Options
@@ -81,7 +78,7 @@ open class DictionaryDecoder {
         
         /// Attempt to use a default value when encountering missing values.
         /// The default value is read from the associated dictionary, keyed by the name of the type.
-        case useDefault(defaults : [String:Any])
+        case useDefault(defaults: [String: Any])
     }
     
     /// The strategy to use for automatically changing the value of keys before decoding.
@@ -119,7 +116,7 @@ open class DictionaryDecoder {
             // Find the last non-underscore character
             var lastNonUnderscore = stringKey.index(before: stringKey.endIndex)
             while lastNonUnderscore > firstNonUnderscore && stringKey[lastNonUnderscore] == "_" {
-                stringKey.formIndex(before: &lastNonUnderscore);
+                stringKey.formIndex(before: &lastNonUnderscore)
             }
             
             let keyRange = firstNonUnderscore...lastNonUnderscore
@@ -127,7 +124,7 @@ open class DictionaryDecoder {
             let trailingUnderscoreRange = stringKey.index(after: lastNonUnderscore)..<stringKey.endIndex
             
             let components = stringKey[keyRange].split(separator: "_")
-            let joinedString : String
+            let joinedString: String
             if components.count == 1 {
                 // No underscores in key, leave the word as is - maybe already camel cased
                 joinedString = String(stringKey[keyRange])
@@ -136,13 +133,13 @@ open class DictionaryDecoder {
             }
             
             // Do a cheap isEmpty check before creating and appending potentially empty strings
-            let result : String
-            if (leadingUnderscoreRange.isEmpty && trailingUnderscoreRange.isEmpty) {
+            let result: String
+            if leadingUnderscoreRange.isEmpty && trailingUnderscoreRange.isEmpty {
                 result = joinedString
-            } else if (!leadingUnderscoreRange.isEmpty && !trailingUnderscoreRange.isEmpty) {
+            } else if !leadingUnderscoreRange.isEmpty && !trailingUnderscoreRange.isEmpty {
                 // Both leading and trailing underscores
                 result = String(stringKey[leadingUnderscoreRange]) + joinedString + String(stringKey[trailingUnderscoreRange])
-            } else if (!leadingUnderscoreRange.isEmpty) {
+            } else if !leadingUnderscoreRange.isEmpty {
                 // Just leading
                 result = String(stringKey[leadingUnderscoreRange]) + joinedString
             } else {
@@ -154,7 +151,7 @@ open class DictionaryDecoder {
     }
     
     /// The strategy to use when values are missing.
-    open var missingValueDecodingStrategy : MissingValueDecodingStrategy = .`throw`
+    open var missingValueDecodingStrategy: MissingValueDecodingStrategy = .`throw`
     
     /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
     open var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
@@ -169,39 +166,39 @@ open class DictionaryDecoder {
     open var keyDecodingStrategy: KeyDecodingStrategy = .useDefaultKeys
     
     /// Contextual user-provided information for use during decoding.
-    open var userInfo: [CodingUserInfoKey : Any] = [:]
+    open var userInfo: [CodingUserInfoKey: Any] = [:]
     
     /// Options set on the top-level encoder to pass down the decoding hierarchy.
     fileprivate struct _Options {
-        let missingValueDecodingStrategy : MissingValueDecodingStrategy
+        let missingValueDecodingStrategy: MissingValueDecodingStrategy
         let dateDecodingStrategy: DateDecodingStrategy
         let dataDecodingStrategy: DataDecodingStrategy
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
         let keyDecodingStrategy: KeyDecodingStrategy
-        let userInfo: [CodingUserInfoKey : Any]
+        let userInfo: [CodingUserInfoKey: Any]
     }
     
     /// The options set on the top-level decoder.
     fileprivate var options: _Options {
         var adjustedMissingStrategy = missingValueDecodingStrategy
         if case .useStandardDefault = adjustedMissingStrategy {
-            let standardDefaults : [String:Any] = [
-                "Int" : 0,
-                "Int8" : Int8(0),
-                "Int16" : Int16(0),
-                "Int32" : Int32(0),
-                "Int64" : Int64(0),
-                "UInt" : UInt(0),
-                "UInt8" : UInt8(0),
-                "UInt16" : UInt16(0),
-                "UInt32" : UInt32(0),
-                "UInt64" : UInt64(0),
-                "Float" : Float(0.0),
-                "Double" : 0.0,
-                "String" : "",
-                "Bool" : false,
-                "Date" : Date(timeIntervalSinceReferenceDate: 0),
-                "Data" : Data()
+            let standardDefaults: [String: Any] = [
+                "Int": 0,
+                "Int8": Int8(0),
+                "Int16": Int16(0),
+                "Int32": Int32(0),
+                "Int64": Int64(0),
+                "UInt": UInt(0),
+                "UInt8": UInt8(0),
+                "UInt16": UInt16(0),
+                "UInt32": UInt32(0),
+                "UInt64": UInt64(0),
+                "Float": Float(0.0),
+                "Double": 0.0,
+                "String": "",
+                "Bool": false,
+                "Date": Date(timeIntervalSinceReferenceDate: 0),
+                "Data": Data()
             ]
             
             adjustedMissingStrategy = .useDefault(defaults: standardDefaults)
@@ -228,7 +225,7 @@ open class DictionaryDecoder {
     /// - returns: A value of the requested type.
     /// - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or if the given data is not valid Dictionary.
     /// - throws: An error if any value throws an error during decoding.
-    open func decode<T : Decodable>(_ type: T.Type, from dictionary: NSDictionary) throws -> T {
+    open func decode<T: Decodable>(_ type: T.Type, from dictionary: NSDictionary) throws -> T {
         let decoder = _DictionaryDecoder(referencing: dictionary, options: self.options)
         guard let value = try decoder.unbox(dictionary, as: type) else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "The given data did not contain a top-level value."))
@@ -244,7 +241,7 @@ open class DictionaryDecoder {
     /// - returns: A value of the requested type.
     /// - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or if the given data is not valid Dictionary.
     /// - throws: An error if any value throws an error during decoding.
-    open func decode<T : Decodable>(_ type: T.Type, from dictionary: [String:Any]) throws -> T {
+    open func decode<T: Decodable>(_ type: T.Type, from dictionary: [String: Any]) throws -> T {
         let decoder = _DictionaryDecoder(referencing: dictionary, options: self.options)
         guard let value = try decoder.unbox(dictionary, as: type) else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "The given data did not contain a top-level value."))
@@ -252,11 +249,10 @@ open class DictionaryDecoder {
         
         return value
     }
-    
 }
 
 // MARK: - _DictionaryDecoder
-fileprivate class _DictionaryDecoder : Decoder {
+private class _DictionaryDecoder: Decoder {
     // MARK: Properties
     /// The decoder's storage.
     fileprivate var storage: _DictionaryDecodingStorage
@@ -265,11 +261,11 @@ fileprivate class _DictionaryDecoder : Decoder {
     fileprivate let options: DictionaryDecoder._Options
     
     /// The path to the current point in encoding.
-    fileprivate(set) public var codingPath: [CodingKey]
+    public fileprivate(set) var codingPath: [CodingKey]
     
     /// Contextual user-provided information for use during encoding.
-    public var userInfo: [CodingUserInfoKey : Any] {
-        return self.options.userInfo
+    public var userInfo: [CodingUserInfoKey: Any] {
+        self.options.userInfo
     }
     
     // MARK: - Initialization
@@ -289,8 +285,8 @@ fileprivate class _DictionaryDecoder : Decoder {
                                                                     debugDescription: "Cannot get keyed decoding container -- found null value instead."))
         }
         
-        guard let topContainer = self.storage.topContainer as? [String : Any] else {
-            throw DecodingError._typeMismatch(at: self.codingPath, expectation: [String : Any].self, reality: self.storage.topContainer)
+        guard let topContainer = self.storage.topContainer as? [String: Any] else {
+            throw DecodingError._typeMismatch(at: self.codingPath, expectation: [String: Any].self, reality: self.storage.topContainer)
         }
         
         let container = DictionaryCodingKeyedDecodingContainer<Key>(referencing: self, wrapping: topContainer)
@@ -312,16 +308,16 @@ fileprivate class _DictionaryDecoder : Decoder {
     }
     
     public func singleValueContainer() throws -> SingleValueDecodingContainer {
-        return self
+        self
     }
 }
 
 // MARK: - Decoding Storage
-fileprivate struct _DictionaryDecodingStorage {
+private struct _DictionaryDecodingStorage {
     // MARK: Properties
     /// The container stack.
     /// Elements may be any one of the Dictionary types (NSNull, NSNumber, String, Array, [String : Any]).
-    private(set) fileprivate var containers: [Any] = []
+    fileprivate private(set) var containers: [Any] = []
     
     // MARK: - Initialization
     /// Initializes `self` with no containers.
@@ -329,11 +325,11 @@ fileprivate struct _DictionaryDecodingStorage {
     
     // MARK: - Modifying the Stack
     fileprivate var count: Int {
-        return self.containers.count
+        self.containers.count
     }
     
     fileprivate var topContainer: Any {
-        precondition(self.containers.count > 0, "Empty container stack.")
+        precondition(!self.containers.isEmpty, "Empty container stack.")
         return self.containers.last!
     }
     
@@ -342,13 +338,13 @@ fileprivate struct _DictionaryDecodingStorage {
     }
     
     fileprivate mutating func popContainer() {
-        precondition(self.containers.count > 0, "Empty container stack.")
+        precondition(!self.containers.isEmpty, "Empty container stack.")
         self.containers.removeLast()
     }
 }
 
 // MARK: Decoding Containers
-fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : KeyedDecodingContainerProtocol {
+private struct DictionaryCodingKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
     typealias Key = K
     
     // MARK: Properties
@@ -356,14 +352,14 @@ fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : Keyed
     private let decoder: _DictionaryDecoder
     
     /// A reference to the container we're reading from.
-    private let container: [String : Any]
+    private let container: [String: Any]
     
     /// The path of coding keys taken to get to this point in decoding.
-    private(set) public var codingPath: [CodingKey]
+    public private(set) var codingPath: [CodingKey]
     
     // MARK: - Initialization
     /// Initializes `self` by referencing the given decoder and container.
-    fileprivate init(referencing decoder: _DictionaryDecoder, wrapping container: [String : Any]) {
+    fileprivate init(referencing decoder: _DictionaryDecoder, wrapping container: [String: Any]) {
         self.decoder = decoder
         switch decoder.options.keyDecodingStrategy {
         case .useDefaultKeys:
@@ -373,11 +369,11 @@ fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : Keyed
             // If we hit a duplicate key after conversion, then we'll use the first one we saw. Effectively an undefined behavior with Dictionary dictionaries.
             self.container = Dictionary(container.map {
                 key, value in (DictionaryDecoder.KeyDecodingStrategy._convertFromSnakeCase(key), value)
-            }, uniquingKeysWith: { (first, _) in first })
+            }, uniquingKeysWith: { first, _ in first })
         case .custom(let converter):
             self.container = Dictionary(container.map {
                 key, value in (converter(decoder.codingPath + [DictionaryCodingKey(stringValue: key, intValue: nil)]).stringValue, value)
-            }, uniquingKeysWith: { (first, _) in first })
+            }, uniquingKeysWith: { first, _ in first })
         }
         self.codingPath = decoder.codingPath
     }
@@ -392,15 +388,15 @@ fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : Keyed
     }
     
     public func contains(_ key: Key) -> Bool {
-        return self.container[key.stringValue] != nil
+        self.container[key.stringValue] != nil
     }
     
     internal func notFoundError(key: Key) -> DecodingError {
-        return DecodingError.keyNotFound(key, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "No value associated with key \(_errorDescription(of: key))."))
+        DecodingError.keyNotFound(key, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "No value associated with key \(_errorDescription(of: key))."))
     }
     
     internal func nullFoundError<T>(type: T.Type) -> DecodingError {
-        return DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) value but found null instead."))
+        DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) value but found null instead."))
     }
     
     private func _errorDescription(of key: CodingKey) -> String {
@@ -428,16 +424,16 @@ fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : Keyed
         return entry is NSNull
     }
     
-    internal func decode<T : Decodable>(_ type: T.Type, forKey key: Key) throws -> T {
+    internal func decode<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T {
         guard let entry = self.container[key.stringValue] else {
-            switch (decoder.options.missingValueDecodingStrategy) {
+            switch decoder.options.missingValueDecodingStrategy {
             case let .useDefault(defaults):
                 let defaultKey = "\(type)"
                 if let def = defaults[defaultKey] as? T {
                     return def
                 }
-                default:
-                    break
+            default:
+                break
             }
 
             throw notFoundError(key: key)
@@ -463,8 +459,8 @@ fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : Keyed
                                                                   debugDescription: "Cannot get \(KeyedDecodingContainer<NestedKey>.self) -- no value found for key \(_errorDescription(of: key))"))
         }
         
-        guard let dictionary = value as? [String : Any] else {
-            throw DecodingError._typeMismatch(at: self.codingPath, expectation: [String : Any].self, reality: value)
+        guard let dictionary = value as? [String: Any] else {
+            throw DecodingError._typeMismatch(at: self.codingPath, expectation: [String: Any].self, reality: value)
         }
         
         let container = DictionaryCodingKeyedDecodingContainer<NestedKey>(referencing: self.decoder, wrapping: dictionary)
@@ -497,15 +493,16 @@ fileprivate struct DictionaryCodingKeyedDecodingContainer<K : CodingKey> : Keyed
     }
     
     public func superDecoder() throws -> Decoder {
-        return try _superDecoder(forKey: DictionaryCodingKey.super)
+        try _superDecoder(forKey: DictionaryCodingKey.super)
     }
     
     public func superDecoder(forKey key: Key) throws -> Decoder {
-        return try _superDecoder(forKey: key)
+        try _superDecoder(forKey: key)
     }
 }
 
-fileprivate struct _DictionaryUnkeyedDecodingContainer : UnkeyedDecodingContainer {
+// swiftlint:disable type_body_length
+private struct _DictionaryUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     // MARK: Properties
     /// A reference to the decoder we're reading from.
     private let decoder: _DictionaryDecoder
@@ -514,10 +511,10 @@ fileprivate struct _DictionaryUnkeyedDecodingContainer : UnkeyedDecodingContaine
     private let container: [Any]
     
     /// The path of coding keys taken to get to this point in decoding.
-    private(set) public var codingPath: [CodingKey]
+    public private(set) var codingPath: [CodingKey]
     
     /// The index of the element we're about to decode.
-    private(set) public var currentIndex: Int
+    public private(set) var currentIndex: Int
     
     // MARK: - Initialization
     /// Initializes `self` by referencing the given decoder and container.
@@ -530,11 +527,11 @@ fileprivate struct _DictionaryUnkeyedDecodingContainer : UnkeyedDecodingContaine
     
     // MARK: - UnkeyedDecodingContainer Methods
     public var count: Int? {
-        return self.container.count
+        self.container.count
     }
     
     public var isAtEnd: Bool {
-        return self.currentIndex >= self.count!
+        self.currentIndex >= self.count!
     }
     
     public mutating func decodeNil() throws -> Bool {
@@ -774,7 +771,7 @@ fileprivate struct _DictionaryUnkeyedDecodingContainer : UnkeyedDecodingContaine
         return decoded
     }
     
-    public mutating func decode<T : Decodable>(_ type: T.Type) throws -> T {
+    public mutating func decode<T: Decodable>(_ type: T.Type) throws -> T {
         guard !self.isAtEnd else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath + [DictionaryCodingKey(index: self.currentIndex)], debugDescription: "Unkeyed container is at end."))
         }
@@ -807,8 +804,8 @@ fileprivate struct _DictionaryUnkeyedDecodingContainer : UnkeyedDecodingContaine
                                                                     debugDescription: "Cannot get keyed decoding container -- found null value instead."))
         }
         
-        guard let dictionary = value as? [String : Any] else {
-            throw DecodingError._typeMismatch(at: self.codingPath, expectation: [String : Any].self, reality: value)
+        guard let dictionary = value as? [String: Any] else {
+            throw DecodingError._typeMismatch(at: self.codingPath, expectation: [String: Any].self, reality: value)
         }
         
         self.currentIndex += 1
@@ -856,8 +853,9 @@ fileprivate struct _DictionaryUnkeyedDecodingContainer : UnkeyedDecodingContaine
         return _DictionaryDecoder(referencing: value, at: self.decoder.codingPath, options: self.decoder.options)
     }
 }
+// swiftlint:enable type_body_length
 
-extension _DictionaryDecoder : SingleValueDecodingContainer {
+extension _DictionaryDecoder: SingleValueDecodingContainer {
     // MARK: SingleValueDecodingContainer Methods
     private func expectNonNull<T>(_ type: T.Type) throws {
         guard !self.decodeNil() else {
@@ -866,7 +864,7 @@ extension _DictionaryDecoder : SingleValueDecodingContainer {
     }
     
     public func decodeNil() -> Bool {
-        return self.storage.topContainer is NSNull
+        self.storage.topContainer is NSNull
     }
     
     public func decode(_ type: Bool.Type) throws -> Bool {
@@ -939,7 +937,7 @@ extension _DictionaryDecoder : SingleValueDecodingContainer {
         return try self.unbox(self.storage.topContainer, as: String.self)!
     }
     
-    public func decode<T : Decodable>(_ type: T.Type) throws -> T {
+    public func decode<T: Decodable>(_ type: T.Type) throws -> T {
         try expectNonNull(type)
         return try self.unbox(self.storage.topContainer, as: type)!
     }
@@ -952,20 +950,13 @@ extension _DictionaryDecoder {
         guard !(value is NSNull) else { return nil }
         
         if let number = value as? NSNumber {
-            
             if number === kCFBooleanTrue as NSNumber {
                 return true
             } else if number === kCFBooleanFalse as NSNumber {
                 return false
             } else {
-                return number != 0 // TODO: Add a flag to disallow non-boolean numbers?
+                return number != 0
             }
-            
-            /* FIXME: If swift-corelibs-foundation doesn't change to use NSNumber, this code path will need to be included and tested:
-             } else if let bool = value as? Bool {
-             return bool
-             */
-            
         }
         
         throw DecodingError._typeMismatch(at: self.codingPath, expectation: type, reality: value)
@@ -1137,20 +1128,6 @@ extension _DictionaryDecoder {
             }
             
             return Float(double)
-            
-            /* FIXME: If swift-corelibs-foundation doesn't change to use NSNumber, this code path will need to be included and tested:
-             } else if let double = value as? Double {
-             if abs(double) <= Double(Float.max) {
-             return Float(double)
-             }
-             overflow = true
-             } else if let int = value as? Int {
-             if let float = Float(exactly: int) {
-             return float
-             }
-             overflow = true
-             */
-            
         } else if let string = value as? String,
             case .convertFromString(let posInfString, let negInfString, let nanString) = self.options.nonConformingFloatDecodingStrategy {
             if string == posInfString {
@@ -1174,17 +1151,6 @@ extension _DictionaryDecoder {
             // * If it was a Float or Double, you will get back the precise value
             // * If it was Decimal, you will get back the nearest approximation
             return number.doubleValue
-            
-            /* FIXME: If swift-corelibs-foundation doesn't change to use NSNumber, this code path will need to be included and tested:
-             } else if let double = value as? Double {
-             return double
-             } else if let int = value as? Int {
-             if let double = Double(exactly: int) {
-             return double
-             }
-             overflow = true
-             */
-            
         } else if let string = value as? String,
             case .convertFromString(let posInfString, let negInfString, let nanString) = self.options.nonConformingFloatDecodingStrategy {
             if string == posInfString {
@@ -1321,7 +1287,7 @@ extension _DictionaryDecoder {
         }
     }
     
-    fileprivate func unbox<T : Decodable>(_ value: Any, as type: T.Type) throws -> T? {
+    fileprivate func unbox<T: Decodable>(_ value: Any, as type: T.Type) throws -> T? {
         if type == Date.self || type == NSDate.self {
             return try self.unbox(value, as: Date.self) as? T
         } else if type == Data.self || type == NSData.self {
@@ -1349,9 +1315,9 @@ extension _DictionaryDecoder {
     }
 }
 
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 // Shared ISO8601 Date Formatter
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 // NOTE: This value is implicitly lazy and _must_ be lazy. We're compiled against the latest SDK (w/ ISO8601DateFormatter), but linked against whichever Foundation the user has. ISO8601DateFormatter might not exist, so we better not hit this code path on an older OS.
 @available(OSX 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
 internal var _iso8601Formatter: ISO8601DateFormatter = {
@@ -1359,3 +1325,5 @@ internal var _iso8601Formatter: ISO8601DateFormatter = {
     formatter.formatOptions = .withInternetDateTime
     return formatter
 }()
+
+// swiftlint:enable discouraged_optional_boolean

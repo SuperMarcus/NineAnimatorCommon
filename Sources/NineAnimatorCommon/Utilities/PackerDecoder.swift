@@ -19,8 +19,6 @@
 
 import Foundation
 
-// swiftlint:disable large_tuple
-
 /// A string decoder for PACKER packed JavaScript code, which is seen in
 /// many streaming sources.
 ///

@@ -20,11 +20,9 @@
 
 import Foundation
 
-// swiftlint:disable all
-
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 // Dictionary Encoder
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 /// `DictionaryEncoder` facilitates the encoding of `Encodable` values into Dictionary.
 open class DictionaryEncoder {
@@ -104,9 +102,9 @@ open class DictionaryEncoder {
         case custom((_ codingPath: [CodingKey]) -> CodingKey)
 
         internal static func _convertToSnakeCase(_ stringKey: String) -> String {
-            guard stringKey.count > 0 else { return stringKey }
+            guard !stringKey.isEmpty else { return stringKey }
 
-            var words : [Range<String.Index>] = []
+            var words: [Range<String.Index>] = []
             // The general idea of this algorithm is to split words on transition from lower to upper case, then on transition of >1 upper case characters to lowercase
             //
             // myProperty -> my_property
@@ -146,9 +144,9 @@ open class DictionaryEncoder {
                 searchRange = lowerCaseRange.upperBound..<searchRange.upperBound
             }
             words.append(wordStart..<searchRange.upperBound)
-            let result = words.map({ (range) in
-                return stringKey[range].lowercased()
-            }).joined(separator: "_")
+            let result = words.map { range in
+                stringKey[range].lowercased()
+            } .joined(separator: "_")
             return result
         }
     }
@@ -166,7 +164,7 @@ open class DictionaryEncoder {
     open var keyEncodingStrategy: KeyEncodingStrategy = .useDefaultKeys
 
     /// Contextual user-provided information for use during encoding.
-    open var userInfo: [CodingUserInfoKey : Any] = [:]
+    open var userInfo: [CodingUserInfoKey: Any] = [:]
 
     /// Options set on the top-level encoder to pass down the encoding hierarchy.
     fileprivate struct _Options {
@@ -174,16 +172,16 @@ open class DictionaryEncoder {
         let dataEncodingStrategy: DataEncodingStrategy
         let nonConformingFloatEncodingStrategy: NonConformingFloatEncodingStrategy
         let keyEncodingStrategy: KeyEncodingStrategy
-        let userInfo: [CodingUserInfoKey : Any]
+        let userInfo: [CodingUserInfoKey: Any]
     }
 
     /// The options set on the top-level encoder.
     fileprivate var options: _Options {
-        return _Options(dateEncodingStrategy: dateEncodingStrategy,
-                        dataEncodingStrategy: dataEncodingStrategy,
-                        nonConformingFloatEncodingStrategy: nonConformingFloatEncodingStrategy,
-                        keyEncodingStrategy: keyEncodingStrategy,
-                        userInfo: userInfo)
+        _Options(dateEncodingStrategy: dateEncodingStrategy,
+                 dataEncodingStrategy: dataEncodingStrategy,
+                 nonConformingFloatEncodingStrategy: nonConformingFloatEncodingStrategy,
+                 keyEncodingStrategy: keyEncodingStrategy,
+                 userInfo: userInfo)
     }
 
     // MARK: - Constructing a Dictionary Encoder
@@ -197,7 +195,7 @@ open class DictionaryEncoder {
     /// - returns: A new `Data` value containing the encoded Dictionary data.
     /// - throws: `EncodingError.invalidValue` if a non-conforming floating-point value is encountered during encoding, and the encoding strategy is `.throw`.
     /// - throws: An error if any value throws an error during encoding.
-  open func encode<T : Encodable>(_ value: T) throws -> NSDictionary {
+  open func encode<T: Encodable>(_ value: T) throws -> NSDictionary {
         let encoder = _DictionaryEncoder(options: self.options)
 
         guard let topLevel = try encoder.box_(value) else {
@@ -222,7 +220,7 @@ open class DictionaryEncoder {
   /// - returns: A new `Data` value containing the encoded Dictionary data.
   /// - throws: `EncodingError.invalidValue` if a non-conforming floating-point value is encountered during encoding, and the encoding strategy is `.throw`.
   /// - throws: An error if any value throws an error during encoding.
-  open func encode<T : Encodable>(_ value: T) throws -> [String:Any] {
+  open func encode<T: Encodable>(_ value: T) throws -> [String: Any] {
     let encoder = _DictionaryEncoder(options: self.options)
     
     guard let topLevel = try encoder.box_(value) else {
@@ -237,13 +235,12 @@ open class DictionaryEncoder {
       throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: [], debugDescription: "Top-level \(T.self) encoded as string Dictionary fragment."))
     }
     
-    return topLevel as! [String:Any]
+    return topLevel as! [String: Any]
   }
-
 }
 
 // MARK: - _DictionaryEncoder
-fileprivate class _DictionaryEncoder : Encoder {
+private class _DictionaryEncoder: Encoder {
     // MARK: Properties
     /// The encoder's storage.
     fileprivate var storage: _DictionaryEncodingStorage
@@ -255,8 +252,8 @@ fileprivate class _DictionaryEncoder : Encoder {
     public var codingPath: [CodingKey]
 
     /// Contextual user-provided information for use during encoding.
-    public var userInfo: [CodingUserInfoKey : Any] {
-        return self.options.userInfo
+    public var userInfo: [CodingUserInfoKey: Any] {
+        self.options.userInfo
     }
 
     // MARK: - Initialization
@@ -317,16 +314,16 @@ fileprivate class _DictionaryEncoder : Encoder {
     }
 
     public func singleValueContainer() -> SingleValueEncodingContainer {
-        return self
+        self
     }
 }
 
 // MARK: - Encoding Storage and Containers
-fileprivate struct _DictionaryEncodingStorage {
+private struct _DictionaryEncodingStorage {
     // MARK: Properties
     /// The container stack.
     /// Elements may be any one of the Dictionary types (NSNull, NSNumber, NSString, NSArray, NSDictionary).
-    private(set) fileprivate var containers: [NSObject] = []
+    fileprivate private(set) var containers: [NSObject] = []
 
     // MARK: - Initialization
     /// Initializes `self` with no containers.
@@ -334,7 +331,7 @@ fileprivate struct _DictionaryEncodingStorage {
 
     // MARK: - Modifying the Stack
     fileprivate var count: Int {
-        return self.containers.count
+        self.containers.count
     }
 
     fileprivate mutating func pushKeyedContainer() -> NSMutableDictionary {
@@ -354,13 +351,13 @@ fileprivate struct _DictionaryEncodingStorage {
     }
 
     fileprivate mutating func popContainer() -> NSObject {
-        precondition(self.containers.count > 0, "Empty container stack.")
+        precondition(!self.containers.isEmpty, "Empty container stack.")
         return self.containers.popLast()!
     }
 }
 
 // MARK: - Encoding Containers
-fileprivate struct DictionaryCodingKeyedEncodingContainer<K : CodingKey> : KeyedEncodingContainerProtocol {
+private struct DictionaryCodingKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProtocol {
     typealias Key = K
 
     // MARK: Properties
@@ -371,7 +368,7 @@ fileprivate struct DictionaryCodingKeyedEncodingContainer<K : CodingKey> : Keyed
     private let container: NSMutableDictionary
 
     /// The path of coding keys taken to get to this point in encoding.
-    private(set) public var codingPath: [CodingKey]
+    public private(set) var codingPath: [CodingKey]
 
     // MARK: - Initialization
     /// Initializes `self` with the given references.
@@ -449,7 +446,7 @@ fileprivate struct DictionaryCodingKeyedEncodingContainer<K : CodingKey> : Keyed
         self.container[_converted(key).stringValue] = try self.encoder.box(value)
     }
 
-    public mutating func encode<T : Encodable>(_ value: T, forKey key: Key) throws {
+    public mutating func encode<T: Encodable>(_ value: T, forKey key: Key) throws {
         self.encoder.codingPath.append(key)
         defer { self.encoder.codingPath.removeLast() }
         self.container[_converted(key).stringValue] = try self.encoder.box(value)
@@ -476,15 +473,15 @@ fileprivate struct DictionaryCodingKeyedEncodingContainer<K : CodingKey> : Keyed
     }
 
     public mutating func superEncoder() -> Encoder {
-        return _DictionaryReferencingEncoder(referencing: self.encoder, key: DictionaryCodingKey.super, convertedKey: _converted(DictionaryCodingKey.super), wrapping: self.container)
+        _DictionaryReferencingEncoder(referencing: self.encoder, key: DictionaryCodingKey.super, convertedKey: _converted(DictionaryCodingKey.super), wrapping: self.container)
     }
 
     public mutating func superEncoder(forKey key: Key) -> Encoder {
-        return _DictionaryReferencingEncoder(referencing: self.encoder, key: key, convertedKey: _converted(key), wrapping: self.container)
+        _DictionaryReferencingEncoder(referencing: self.encoder, key: key, convertedKey: _converted(key), wrapping: self.container)
     }
 }
 
-fileprivate struct _DictionaryUnkeyedEncodingContainer : UnkeyedEncodingContainer {
+private struct _DictionaryUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     // MARK: Properties
     /// A reference to the encoder we're writing to.
     private let encoder: _DictionaryEncoder
@@ -493,11 +490,11 @@ fileprivate struct _DictionaryUnkeyedEncodingContainer : UnkeyedEncodingContaine
     private let container: NSMutableArray
 
     /// The path of coding keys taken to get to this point in encoding.
-    private(set) public var codingPath: [CodingKey]
+    public private(set) var codingPath: [CodingKey]
 
     /// The number of elements encoded into the container.
     public var count: Int {
-        return self.container.count
+        self.container.count
     }
 
     // MARK: - Initialization
@@ -537,7 +534,7 @@ fileprivate struct _DictionaryUnkeyedEncodingContainer : UnkeyedEncodingContaine
         self.container.add(try self.encoder.box(value))
     }
 
-    public mutating func encode<T : Encodable>(_ value: T) throws {
+    public mutating func encode<T: Encodable>(_ value: T) throws {
         self.encoder.codingPath.append(DictionaryCodingKey(index: self.count))
         defer { self.encoder.codingPath.removeLast() }
         self.container.add(try self.encoder.box(value))
@@ -564,11 +561,11 @@ fileprivate struct _DictionaryUnkeyedEncodingContainer : UnkeyedEncodingContaine
     }
 
     public mutating func superEncoder() -> Encoder {
-        return _DictionaryReferencingEncoder(referencing: self.encoder, at: self.container.count, wrapping: self.container)
+        _DictionaryReferencingEncoder(referencing: self.encoder, at: self.container.count, wrapping: self.container)
     }
 }
 
-extension _DictionaryEncoder : SingleValueEncodingContainer {
+extension _DictionaryEncoder: SingleValueEncodingContainer {
     // MARK: - SingleValueEncodingContainer Methods
     fileprivate func assertCanEncodeNewValue() {
         precondition(self.canEncodeNewValue, "Attempt to encode value through single value container when previously value already encoded.")
@@ -649,7 +646,7 @@ extension _DictionaryEncoder : SingleValueEncodingContainer {
         try self.storage.push(container: self.box(value))
     }
 
-    public func encode<T : Encodable>(_ value: T) throws {
+    public func encode<T: Encodable>(_ value: T) throws {
         assertCanEncodeNewValue()
         try self.storage.push(container: self.box(value))
     }
@@ -658,18 +655,18 @@ extension _DictionaryEncoder : SingleValueEncodingContainer {
 // MARK: - Concrete Value Representations
 extension _DictionaryEncoder {
     /// Returns the given value boxed in a container appropriate for pushing onto the container stack.
-    fileprivate func box(_ value: Bool)   -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: Int)    -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: Int8)   -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: Int16)  -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: Int32)  -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: Int64)  -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: UInt)   -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: UInt8)  -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: UInt16) -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: UInt32) -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: UInt64) -> NSObject { return NSNumber(value: value) }
-    fileprivate func box(_ value: String) -> NSObject { return NSString(string: value) }
+    fileprivate func box(_ value: Bool) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: Int) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: Int8) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: Int16) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: Int32) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: Int64) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: UInt) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: UInt8) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: UInt16) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: UInt32) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: UInt64) -> NSObject { NSNumber(value: value) }
+    fileprivate func box(_ value: String) -> NSObject { NSString(string: value) }
 
     fileprivate func box(_ float: Float) throws -> NSObject {
         guard !float.isInfinite && !float.isNaN else {
@@ -742,7 +739,7 @@ extension _DictionaryEncoder {
             } catch {
                 // If the value pushed a container before throwing, pop it back off to restore state.
                 if self.storage.count > depth {
-                    let _ = self.storage.popContainer()
+                    _ = self.storage.popContainer()
                 }
 
                 throw error
@@ -769,7 +766,7 @@ extension _DictionaryEncoder {
                 // If the value pushed a container before throwing, pop it back off to restore state.
                 // This shouldn't be possible for Data (which encodes as an array of bytes), but it can't hurt to catch a failure.
                 if self.storage.count > depth {
-                    let _ = self.storage.popContainer()
+                    _ = self.storage.popContainer()
                 }
 
                 throw error
@@ -787,7 +784,7 @@ extension _DictionaryEncoder {
             } catch {
                 // If the value pushed a container before throwing, pop it back off to restore state.
                 if self.storage.count > depth {
-                    let _ = self.storage.popContainer()
+                    _ = self.storage.popContainer()
                 }
 
                 throw error
@@ -803,12 +800,12 @@ extension _DictionaryEncoder {
         }
     }
 
-    fileprivate func box<T : Encodable>(_ value: T) throws -> NSObject {
-        return try self.box_(value) ?? NSDictionary()
+    fileprivate func box<T: Encodable>(_ value: T) throws -> NSObject {
+        try self.box_(value) ?? NSDictionary()
     }
 
     // This method is called "box_" instead of "box" to disambiguate it from the overloads. Because the return type here is different from all of the "box" overloads (and is more general), any "box" calls in here would call back into "box" recursively instead of calling the appropriate overload, which is not what we want.
-    fileprivate func box_<T : Encodable>(_ value: T) throws -> NSObject? {
+    fileprivate func box_<T: Encodable>(_ value: T) throws -> NSObject? {
         if T.self == Date.self || T.self == NSDate.self {
             // Respect Date encoding strategy
             return try self.box((value as! Date))
@@ -830,7 +827,7 @@ extension _DictionaryEncoder {
         } catch {
             // If the value pushed a container before throwing, pop it back off to restore state.
             if self.storage.count > depth {
-                let _ = self.storage.popContainer()
+                _ = self.storage.popContainer()
             }
 
             throw error
@@ -848,7 +845,7 @@ extension _DictionaryEncoder {
 // MARK: - _DictionaryReferencingEncoder
 /// _DictionaryReferencingEncoder is a special subclass of _DictionaryEncoder which has its own storage, but references the contents of a different encoder.
 /// It's used in superEncoder(), which returns a new encoder for encoding a superclass -- the lifetime of the encoder should not escape the scope it's created in, but it doesn't necessarily know when it's done being used (to write to the original container).
-fileprivate class _DictionaryReferencingEncoder : _DictionaryEncoder {
+private class _DictionaryReferencingEncoder: _DictionaryEncoder {
     // MARK: Reference types.
     /// The type of container we're referencing.
     private enum Reference {
@@ -878,7 +875,9 @@ fileprivate class _DictionaryReferencingEncoder : _DictionaryEncoder {
 
     /// Initializes `self` by referencing the given dictionary container in the given encoder.
     fileprivate init(referencing encoder: _DictionaryEncoder,
-                     key: CodingKey, convertedKey: CodingKey, wrapping dictionary: NSMutableDictionary) {
+                     key: CodingKey,
+                     convertedKey: CodingKey,
+                     wrapping dictionary: NSMutableDictionary) {
         self.encoder = encoder
         self.reference = .dictionary(dictionary, convertedKey.stringValue)
         super.init(options: encoder.options, codingPath: encoder.codingPath)
@@ -887,7 +886,7 @@ fileprivate class _DictionaryReferencingEncoder : _DictionaryEncoder {
     }
 
     // MARK: - Coding Path Operations
-    fileprivate override var canEncodeNewValue: Bool {
+    override fileprivate var canEncodeNewValue: Bool {
         // With a regular encoder, the storage and coding path grow together.
         // A referencing encoder, however, inherits its parents coding path, as well as the key it was created for.
         // We have to take this into account.
@@ -905,12 +904,11 @@ fileprivate class _DictionaryReferencingEncoder : _DictionaryEncoder {
         }
 
         switch self.reference {
-        case .array(let array, let index):
+        case let .array(array, index):
             array.insert(value, at: index)
 
-        case .dictionary(let dictionary, let key):
+        case let .dictionary(dictionary, key):
             dictionary[NSString(string: key)] = value
         }
     }
 }
-

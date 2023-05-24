@@ -20,11 +20,9 @@
 
 import Foundation
 
-// swiftlint:disable all
-
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 // Error Utilities
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 internal extension EncodingError {
     /// Returns a `.invalidValue` error describing the given invalid floating-point value.
@@ -33,7 +31,7 @@ internal extension EncodingError {
     /// - parameter value: The value that was invalid to encode.
     /// - parameter path: The path of `CodingKey`s taken to encode this value.
     /// - returns: An `EncodingError` with the appropriate path and debug description.
-    static func _invalidFloatingPointValue<T : FloatingPoint>(_ value: T, at codingPath: [CodingKey]) -> EncodingError {
+    static func _invalidFloatingPointValue<T: FloatingPoint>(_ value: T, at codingPath: [CodingKey]) -> EncodingError {
         let valueDescription: String
         if value == T.infinity {
             valueDescription = "\(T.self).infinity"
@@ -68,13 +66,13 @@ internal extension DecodingError {
     static func _typeDescription(of value: Any) -> String {
         if value is NSNull {
             return "a null value"
-        } else if value is NSNumber /* FIXME: If swift-corelibs-foundation isn't updated to use NSNumber, this check will be necessary: || value is Int || value is Double */ {
+        } else if value is NSNumber {
             return "a number"
         } else if value is String {
             return "a string/data"
         } else if value is [Any] {
             return "an array"
-        } else if value is [String : Any] {
+        } else if value is [String: Any] {
             return "a dictionary"
         } else {
             return "\(type(of: value))"

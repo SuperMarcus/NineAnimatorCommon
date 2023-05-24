@@ -404,3 +404,5 @@ extension NineAnimatorLogger {
         }
     }
 }
+
+// swiftlint:enable all
