@@ -40,7 +40,7 @@ open class NARequestManager: NSObject {
     }()
     
     /// Current User-Agent for requests made from this request manager
-    public private(set) var currentIdentity = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0"
+    public private(set) var currentIdentity = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15"
     
     /// Retrieve/set the credential manager for this request manager
     public var credentialManager: NACredentialManager?
@@ -53,7 +53,7 @@ open class NARequestManager: NSObject {
     private lazy var _cfResolver = CloudflareWAFResolver(parent: self)
     
     @AtomicProperty private var _internalTaskReferences = [ObjectIdentifier: NineAnimatorAsyncTask]()
-    @AtomicProperty fileprivate var _requestCustomRedirectionHandlers = [(WeakRef<Alamofire.Request>, RequestBuilding.RedirectionHandler)]()
+    @AtomicProperty fileprivate var _requestCustomRedirectionHandlers = [(WeakRef<Alamofire.Request>, RedirectionHandler)]()
     fileprivate var _internalAdapterChain = [WeakRef<AnyObject>]()
     fileprivate var _internalRetrierChain = [WeakRef<AnyObject>]()
     fileprivate var _internalRetryPolicy = Alamofire.RetryPolicy(retryLimit: 3)
@@ -150,19 +150,24 @@ public extension NARequestManager {
 
 // MARK: - Promise making
 public extension NARequestManager {
-    /// A helper struct used to construct promises
+    typealias ResponseHandler = (Response) throws -> Void
+    typealias RedirectionHandler = (_ request: Alamofire.Request,
+        _ response: HTTPURLResponse, _ redirectingTo: URLRequest) -> URLRequest?
+    
+    /// A helper struct used to construct promises for in-memory data requesting tasks
     /// - Note: This struct holds strong reference to the parent request manager.
     struct RequestBuilding {
-        public typealias ResponseHandler = (Response) throws -> Void
-        public typealias RedirectionHandler = (_ request: Alamofire.Request,
-            _ response: HTTPURLResponse, _ redirectingTo: URLRequest) -> URLRequest?
+        fileprivate typealias DataResponseCallback<S, E: Error> = (Alamofire.DataResponse<S, E>) -> Void
+        fileprivate typealias DataRequestGenerator<S, E: Error> = (Alamofire.DataRequest, @escaping DataResponseCallback<S, E>) -> Alamofire.DataRequest
         
         fileprivate var parent: NARequestManager
         fileprivate var makeRequest: (Alamofire.Session) throws -> Alamofire.DataRequest?
         fileprivate var customResponseHandler: ResponseHandler?
         fileprivate var customRedirectionHandler: RedirectionHandler?
         
-        private func _makePromise<S, E>(withResponseGenerator makeResponse: @escaping (Alamofire.DataRequest, @escaping (Alamofire.DataResponse<S, E>) -> Void) -> Alamofire.DataRequest) -> NineAnimatorPromise<S> {
+//        private func _makeDownloadPromise<S, E>(withResponseGener)
+        
+        private func _makePromise<S, E>(withResponseGenerator makeResponse: @escaping DataRequestGenerator<S, E>) -> NineAnimatorPromise<S> {
             NineAnimatorPromise {
                 [weak parent] callback in
                 do {
@@ -265,7 +270,7 @@ public extension NARequestManager.RequestBuilding {
     /// Add a custom response handler which will be invoked before resolving the promise.
     ///
     /// The response handler will be called regardless of whether the request was made successfully. If an error was caught to be thrown by the handler block, the error will be passed on to the promise, masking the request results.
-    func onReceivingResponse(handler: @escaping ResponseHandler) -> Self {
+    func onReceivingResponse(handler: @escaping NARequestManager.ResponseHandler) -> Self {
         var copyOfSelf = self
         copyOfSelf.customResponseHandler = handler
         return copyOfSelf
@@ -274,7 +279,7 @@ public extension NARequestManager.RequestBuilding {
     /// Add a custom redirction handler to this request.
     ///
     /// The default behavior is to follow the requests.
-    func onRedirection(handler: @escaping RedirectionHandler) -> Self {
+    func onRedirection(handler: @escaping NARequestManager.RedirectionHandler) -> Self {
         var copyOfSelf = self
         copyOfSelf.customRedirectionHandler = handler
         return copyOfSelf
