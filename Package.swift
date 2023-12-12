@@ -38,17 +38,17 @@ let package = Package(
         .package(
             name: "Alamofire",
             url: "https://github.com/Alamofire/Alamofire.git",
-            from: "5.7.0"
+            from: "5.8.1"
         ),
         .package(
             name: "SwiftSoup",
             url: "https://github.com/scinfu/SwiftSoup.git",
-            from: "2.6.0"
+            from: "2.6.1"
         ),
         .package(
             name: "Kingfisher",
             url: "https://github.com/onevcat/Kingfisher.git",
-            from: "7.7.0"
+            from: "7.10.1"
         ),
         .package(
             name: "OpenCastSwift",
