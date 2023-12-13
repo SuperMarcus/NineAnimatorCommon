@@ -42,6 +42,7 @@ public extension NineAnimatorUser {
         static var episodeListingOrder: String { "episode.listing.order" }
         static var episodeDetails: String { "episode.details" }
         static var backgroundPlayback: String { "playback.background" }
+        static var forceLandscapePlayer: String { "playback.player.forceLandscape" }
         static var pictureInPicturePlayback: String { "playback.pip" }
         static var playbackFallbackToBrowser: String { "playback.browser" }
         static var notificationShowStream: String { "notification.showStreams" }

@@ -60,6 +60,14 @@ public extension NineAnimatorUser {
         }
     }
     
+    /// Forces the native player to always present in landscape orientation
+    var forceLandscapePlayer: Bool {
+        get { _freezer.bool(forKey: Keys.forceLandscapePlayer) }
+        set {
+            _freezer.set(newValue, forKey: Keys.forceLandscapePlayer)
+        }
+    }
+    
     /// Allow Picture in Picture playback
     ///
     /// This setting is only available on iPads
